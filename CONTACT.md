@@ -1,7 +1,6 @@
 
 **ESEC/FSE 2020**   
 
-Submission #441	
 Model-based Exploration of the Frontier of Behaviours for Deep Learning System Testing
 
 V. Riccio, P. Tonella.  
