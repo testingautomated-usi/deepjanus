@@ -23,7 +23,7 @@ Here is an example BibTeX entry:
 	title= {Model-based Exploration of the Frontier of Behaviours for Deep Learning System Testing},
 	author= {Vincenzo Riccio and Paolo Tonella},
 	booktitle= {Proceedings of the ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
-	series= {FSE '20},
+	series= {FSE 2020},
 	publisher= {ACM},
 	pages= {13 pages},
 	year= {2020}
