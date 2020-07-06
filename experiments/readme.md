@@ -4,10 +4,10 @@
 
 This folder contains the data we obtained by conducting the experimental procedure described in the paper (Section 6).
 It is structured as follows:
-* [__evaluation_BNG__](/evaluation_BEAMNG) contains the data and the scripts of the experiment on BeamNG;
-* [__evaluation_DLF__](/evaluation_DLF) contains the data and the scripts of the experiment on DLFuzz;
-* [__evaluation_MNIST__](/evaluation_MNIST) contains the data and the scripts of the experiment on MNIST.
-* [__results__](/results.xlsx) is a spreadsheet containing the results of the experiments, this is the data source for Tables 2, 3, 4 in the manuscript.
+* [__evaluation_BNG__](/experiments/evaluation_BEAMNG) contains the data and the scripts of the experiment on BeamNG;
+* [__evaluation_DLF__](/experiments/evaluation_DLF) contains the data and the scripts of the experiment on DLFuzz;
+* [__evaluation_MNIST__](/experiments/evaluation_MNIST) contains the data and the scripts of the experiment on MNIST.
+* [__results__](/experiments/results.xlsx) is a spreadsheet containing the results of the experiments, this is the data source for Tables 2, 3, 4 in the manuscript.
 
 _Note:_ each sub-package contains further specific instructions.
 
