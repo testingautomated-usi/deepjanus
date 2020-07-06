@@ -2,7 +2,7 @@
 
 The folder __experiments-MNIST-FSE__ contains the data resulting from the experimental procedure described in the paper.
 
-The metrics can be computed by running the python script __evaluation_radius.py__. 
+The metrics can be computed by running the python script __evaluate_radius.py__. 
 
 The output of this script are csv files containing the data reported in the paper. The expected output is reported in Table3-radius-in.csv and Table3-radius-out.csv.
 
