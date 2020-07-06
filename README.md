@@ -31,7 +31,7 @@ Here is an example BibTeX entry:
 ```
 
 ## License ##
-The software we developed is distributed under MIT license. See the [LICENSE.md](/submissions/available/submission441/LICENSE) file.
+The software we developed is distributed under MIT license. See the [LICENSE.md](/LICENSE) file.
 
 ## Contacts
 
