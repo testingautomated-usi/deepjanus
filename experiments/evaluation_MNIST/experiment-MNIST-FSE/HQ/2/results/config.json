@@ -1,0 +1,1 @@
+{"archive tshd": "4", "mut up": "0.6", "reseed": "10", "K": "0.1", "mut low": "0.01", "model": "models/cnnClassifier.h5", "popsize": "100", "generations": "4000", "label": "5"}

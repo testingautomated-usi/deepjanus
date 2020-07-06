@@ -1,0 +1,7 @@
+Shapely-1.6.4.post2-cp36-cp36m-win_amd64.whl; platform_system == "Windows" and platform_machine == "AMD64"
+shapely; platform_system == "Darwin"
+similaritymeasures
+tensorflow
+keras
+deap
+opencv-python
