@@ -18,6 +18,21 @@ Otherwise, you can manually install each required library listed in the requirem
 
 _Note:_ the version of Shapely should match your system.
 
+## BeamNG Simulator Installation ##
+
+0. Install a Subversion (SVN) client, e.g. TortoiseSVN.
+1. Go to the directory where you want to checkout the BeamNG.research repository.
+2. SVN Checkout the version 1.6.1.0 of the simulator (the one we used for the experiments);
+3. Provide the URL of the repository that is either:
+3.1 The URL of the standard version is https://projects.beamng.com/svn/research. 
+**Note:** we have tested our tool with the unlimited version instead. 
+3.2 The URL of the unlimited version (that we used for our experiments) is https://projects.beamng.com/svn/beamng-research_unlimited/ 
+**Note:** you will be prompted to add your username and password to checkout the unlimited version. These may be obtained by sending a mail to research@beamng.gmbh and providing your motivation.
+4. Add an environment variable named BNG_HOME pointing to the folder **trunk** (the full path), which is inside the repository you checked out. 
+5. Edit the Path environment variable by adding %BNG_HOME%.
+
+The less powerful graphics card we have successfully tested our tool with is an NVIDIA GeForce 940MX.
+
 ## Usage ##
 
 ### Input ###
