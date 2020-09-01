@@ -163,8 +163,9 @@ def main(rand_seed=None):
         if len(archive.get_archive()) > 0:
             seed_range = random.randrange(1, RESEEDUPPERBOUND)
             candidate_seeds = archive.archived_seeds
-            for i in range(seed_range):
-                population[len(population) - i - 1] = reseed_individual(candidate_seeds)
+            for i in range(len(population)):
+                if population[i].seed in archive.archived_seeds:
+                    population[i] = reseed_individual(candidate_seeds)
 
         # Mutation.
         for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
