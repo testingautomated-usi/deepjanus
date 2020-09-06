@@ -23,8 +23,9 @@ Here is an example BibTeX entry:
 	title= {Model-based Exploration of the Frontier of Behaviours for Deep Learning System Testing},
 	author= {Vincenzo Riccio and Paolo Tonella},
 	booktitle= {Proceedings of the ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering},
-	series= {FSE 2020},
-	publisher= {ACM},
+	series= {ESEC/FSE '20},
+	publisher= {Association for Computing Machinery},
+	doi = {10.1145/3368089.3409730},
 	pages= {13 pages},
 	year= {2020}
 }
