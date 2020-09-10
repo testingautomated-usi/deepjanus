@@ -1,4 +1,4 @@
-from tensorflow import keras
+import keras
 import numpy as np
 
 from properties import MODEL, EXPECTED_LABEL, num_classes

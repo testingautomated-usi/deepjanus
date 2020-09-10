@@ -1,6 +1,9 @@
 # GA Setup
-POPSIZE = 100
-NGEN = 4000
+POPSIZE = 800
+NGEN = 40000
+
+RUNTIME = 3600
+INTERVAL = 900
 
 # Mutation Hyperparameters
 # range of the mutation
@@ -25,6 +28,7 @@ EXPECTED_LABEL = 5
 #------- NOT TUNING ----------
 
 # mutation operator probability
+MUTPB = 0.7
 MUTOPPROB = 0.5
 MUTOFPROB = 0.5
 
@@ -41,8 +45,10 @@ PATH = "vectorized_images_GA"
 TESTSOURCEPATH = "source_images_GA"
 TRAINSOURCEPATH = "source_images_trainset"
 
-MODEL = 'models/cnnClassifier_lowLR.h5'
+MODEL = 'models/model_mnist.h5'
 #MODEL = 'models/cnnClassifier.h5'
 
-ORIGINAL_SEEDS = "first_generation_five"
+ORIGINAL_SEEDS = "bootstraps_five"
 RESULTS_PATH = 'results'
+
+BITMAP_THRESHOLD = 0.5

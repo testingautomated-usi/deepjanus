@@ -1,5 +1,5 @@
 import numpy as np
-from tensorflow import keras
+import keras
 
 import evaluator
 from predictor import Predictor

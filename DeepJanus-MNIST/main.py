@@ -1,21 +1,28 @@
 import itertools
 import random
-
-import vectorization_tools
-from digit_input import Digit
-from digit_mutator import DigitMutator
-from utils import print_archive
-
+import time
+from datetime import datetime
+from pathlib import Path
 import numpy as np
 from deap import base, creator, tools
 from deap.tools.emo import selNSGA2
-from tensorflow import keras
+import keras
+import json
+import os
+import sys
 
+# local imports
+import vectorization_tools
+from digit_input import Digit
+from digit_mutator import DigitMutator
 import archive_manager
 from individual import Individual
 from properties import NGEN, IMG_SIZE, \
-    POPSIZE, EXPECTED_LABEL, INITIALPOP, \
-    ORIGINAL_SEEDS, RESEEDUPPERBOUND, GENERATE_ONE_ONLY
+    EXPECTED_LABEL, INITIALPOP, \
+    ORIGINAL_SEEDS, RESEEDUPPERBOUND, GENERATE_ONE_ONLY, RUNTIME, INTERVAL, POPSIZE
+from mapelites_mnist import MapElitesMNIST
+import utils
+import plot_utils
 
 # Load the dataset.
 mnist = keras.datasets.mnist
@@ -116,6 +123,8 @@ toolbox.register("mutate", mutate_individual)
 
 def main(rand_seed=None):
     random.seed(rand_seed)
+    start_time = datetime.now()
+    starttime = time.time()
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("min", np.min, axis=0)
@@ -153,58 +162,129 @@ def main(rand_seed=None):
     logbook.record(gen=0, evals=len(invalid_ind), **record)
     print(logbook.stream)
 
+    ii = 1
     # Begin the generational process
     for gen in range(1, NGEN):
-        # Vary the population.
-        offspring = tools.selTournamentDCD(population, len(population))
-        offspring = [toolbox.clone(ind) for ind in offspring]
+        elapsed_time = datetime.now() - start_time
+        if elapsed_time.seconds <= RUNTIME:
+            # Vary the population.
+            offspring = tools.selTournamentDCD(population, len(population))
+            offspring = [toolbox.clone(ind) for ind in offspring]
 
-        # Reseeding
-        if len(archive.get_archive()) > 0:
-            seed_range = random.randrange(1, RESEEDUPPERBOUND)
-            candidate_seeds = archive.archived_seeds
-            for i in range(len(population)):
-                if population[i].seed in archive.archived_seeds:
-                    population[i] = reseed_individual(candidate_seeds)
+            # Reseeding
+            if len(archive.get_archive()) > 0:
+                seed_range = random.randrange(1, RESEEDUPPERBOUND)
+                candidate_seeds = archive.archived_seeds
+                for i in range(len(population)):
+                    if population[i].seed in archive.archived_seeds:
+                        population[i] = reseed_individual(candidate_seeds)
 
-        # Mutation.
-        for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
-            toolbox.mutate(ind1)
-            toolbox.mutate(ind2)
-            del ind1.fitness.values, ind2.fitness.values
+            # Mutation.
+            for ind1, ind2 in zip(offspring[::2], offspring[1::2]):
+                toolbox.mutate(ind1)
+                toolbox.mutate(ind2)
+                del ind1.fitness.values, ind2.fitness.values
 
-        # Evaluate the individuals
-        # NOTE: all individuals in both population and offspring are evaluated to assign crowding distance.
-        invalid_ind = [ind for ind in population + offspring]
-        fitnesses = [toolbox.evaluate(i, archive.get_archive()) for i in invalid_ind]
+            # Evaluate the individuals
+            # NOTE: all individuals in both population and offspring are evaluated to assign crowding distance.
+            invalid_ind = [ind for ind in population + offspring]
+            fitnesses = [toolbox.evaluate(i, archive.get_archive()) for i in invalid_ind]
 
-        for ind, fit in zip(invalid_ind, fitnesses):
-            ind.fitness.values = fit
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
 
-        for ind in population + offspring:
-            if ind.fitness.values[1] < 0:
-                archive.update_archive(ind)
+            for ind in population + offspring:
+                if ind.fitness.values[1] < 0:
+                    archive.update_archive(ind)
 
-        # Select the next generation population
-        population = toolbox.select(population + offspring, POPSIZE)
+            # Select the next generation population
+            population = toolbox.select(population + offspring, POPSIZE)
 
-        if gen % 300 == 0:
-            archive.create_report(x_test, Individual.SEEDS, gen)
+            # Generate maps
+            elapsed_time = datetime.now() - start_time
+            if (elapsed_time.seconds) >= INTERVAL*ii:
+                print("generating map")                
+                archive.create_report(x_test, Individual.SEEDS, gen)
+                generate_maps((INTERVAL*ii/60), gen)
+                ii += 1
 
-        # Update the statistics with the new population
-        record = stats.compile(population)
-        logbook.record(gen=gen, evals=len(invalid_ind), **record)
-        print(logbook.stream)
+            # Update the statistics with the new population
+            record = stats.compile(population)
+            logbook.record(gen=gen, evals=len(invalid_ind), **record)
+            print(logbook.stream)
 
     print(logbook.stream)
+
+    endtime = time.time()
+    elapsedtime = endtime - starttime
+    print(f"Running time {time.strftime('%H:%M:%S', time.gmtime(elapsedtime))}")        
 
     return population
 
 
-if __name__ == "__main__":
-    archive = archive_manager.Archive()
-    pop = main()
+def generate_maps(execution_time, iterations):
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+    log_dir_name = f"log_{POPSIZE}_{iterations}_{execution_time}_{now}" 
+    log_dir_path = Path(f'logs/{log_dir_name}')
+    log_dir_path.mkdir(parents=True, exist_ok=True)   
+    if len(archive.get_archive()) > 0:
+        ''' type #1 : Moves & Bitmaps
+            type #2 : Moves & Orientation
+            type #3 : Orientation & Bitmaps
+        '''
+        for i in range(1,4):
+            map_E = MapElitesMNIST(i, NGEN, POPSIZE, True, f"logs/{log_dir_name}")               
+            log_dir_path = Path(f'logs/{log_dir_name}/{map_E.feature_dimensions[1].name}_{map_E.feature_dimensions[0].name}')
+            log_dir_path.mkdir(parents=True, exist_ok=True)
+            for ind in archive.get_archive():             
+                map_E.place_in_mapelites(ind, archive.get_archive())
 
-    print_archive(archive.get_archive())
-    archive.create_report(x_test, Individual.SEEDS, 'final')
-    print("GAME OVER")
+            # rescale        
+            map_E.solutions, map_E.performances = utils.rescale(map_E.solutions,map_E.performances)     
+
+            # filled values                                 
+            filled = np.count_nonzero(map_E.solutions!=None)
+            total = np.size(map_E.solutions)
+            filled_density = (filled / total)
+                
+            Individual.COUNT_MISS = 0    
+            covered_seeds = set()
+            mis_seeds = set()
+            for (i,j), value in np.ndenumerate(map_E.performances): 
+                if map_E.performances[i,j] != 2.0:
+                    covered_seeds.add(map_E.solutions[i,j].seed)
+                    if map_E.performances[i,j] < 0: 
+                        mis_seeds.add(map_E.solutions[i,j].seed)
+                        Individual.COUNT_MISS += 1
+                        utils.print_image(f"{log_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified)
+                    else:
+                        utils.print_image(f"{log_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified, 'gray')
+
+            report = {               
+                'Covered seeds' : len(covered_seeds),
+                'Filled cells': str(filled),
+                'Filled density': str(filled_density),
+                'Misclassified seeds': len(mis_seeds),
+                'Misclassification': str(Individual.COUNT_MISS),
+                'Misclassification density': str(Individual.COUNT_MISS/filled)
+                
+            }  
+            dst = f"logs/report_"+ map_E.feature_dimensions[1].name +'_'+ map_E.feature_dimensions[0].name+ '_'+ str(execution_time) +'.json'
+            report_string = json.dumps(report)
+
+            file = open(dst, 'w')
+            file.write(report_string)
+            file.close()
+
+            map_E.plot_map_of_elites()
+            plot_utils.plot_fives(f"logs/{log_dir_name}", map_E.feature_dimensions[1].name, map_E.feature_dimensions[0].name)  
+            
+
+
+if __name__ == "__main__":    
+    archive = archive_manager.Archive()    
+    pop = main()
+    rand = random.randint(0,10000)
+    filename = f"logs/results_{rand}"
+    utils.generate_reports(filename)
+
