@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 from os import makedirs
 from os.path import exists, basename
 from shutil import copyfile
@@ -8,7 +11,6 @@ import glob
 import keras
 import json
 import numpy as np
-import matplotlib.cm as cm
 from sklearn.linear_model import LinearRegression
 import xml.etree.ElementTree as ET
 import potrace
