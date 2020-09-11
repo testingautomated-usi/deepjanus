@@ -223,9 +223,11 @@ def main(rand_seed=None):
 
 
 def generate_maps(execution_time, iterations):
+    rand1 = random.randint(0, 1000000000)
+    dir_name = "temp_" + str(rand1)
     now = datetime.now().strftime("%Y%m%d%H%M%S")
-    log_dir_name = f"log_{POPSIZE}_{iterations}_{execution_time}_{now}" 
-    log_dir_path = Path(f'logs/{log_dir_name}')
+    log_dir_name = "log_"+str(POPSIZE)+"_"+str(iterations)+"_"+str(execution_time)+"_"+str(now) 
+    log_dir_path = Path('logs/'+str(dirname)+"/"+str(log_dir_name))
     log_dir_path.mkdir(parents=True, exist_ok=True)   
     if len(archive.get_archive()) > 0:
         ''' type #1 : Moves & Bitmaps
@@ -234,7 +236,7 @@ def generate_maps(execution_time, iterations):
         '''
         for i in range(1,4):
             map_E = MapElitesMNIST(i, NGEN, POPSIZE, True, f"logs/{log_dir_name}")               
-            log_dir_path = Path(f'logs/{log_dir_name}/{map_E.feature_dimensions[1].name}_{map_E.feature_dimensions[0].name}')
+            log_dir_path = Path(f'logs/{dir_name}/{log_dir_name}/{map_E.feature_dimensions[1].name}_{map_E.feature_dimensions[0].name}')
             log_dir_path.mkdir(parents=True, exist_ok=True)
             for ind in archive.get_archive():             
                 map_E.place_in_mapelites(ind, archive.get_archive())
@@ -269,7 +271,7 @@ def generate_maps(execution_time, iterations):
                 'Misclassification density': str(Individual.COUNT_MISS/filled)
                 
             }  
-            dst = f"logs/report_"+ map_E.feature_dimensions[1].name +'_'+ map_E.feature_dimensions[0].name+ '_'+ str(execution_time) +'.json'
+            dst = f"logs/{dir_name}/report_"+ map_E.feature_dimensions[1].name +'_'+ map_E.feature_dimensions[0].name+ '_'+ str(execution_time) +'.json'
             report_string = json.dumps(report)
 
             file = open(dst, 'w')
@@ -277,7 +279,7 @@ def generate_maps(execution_time, iterations):
             file.close()
 
             map_E.plot_map_of_elites()
-            plot_utils.plot_fives(f"logs/{log_dir_name}", map_E.feature_dimensions[1].name, map_E.feature_dimensions[0].name)  
+            plot_utils.plot_fives(f"logs/{dir_name}/{log_dir_name}", map_E.feature_dimensions[1].name, map_E.feature_dimensions[0].name)  
             
 
 
