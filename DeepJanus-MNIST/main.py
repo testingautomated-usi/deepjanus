@@ -61,7 +61,7 @@ def generate_individual():
         assert (len(starting_seeds) == POPSIZE)
         seed = starting_seeds[Individual.COUNT - 1]
         Individual.SEEDS.add(seed)
-
+    
     if not GENERATE_ONE_ONLY:
         digit1, digit2, distance_inputs = DigitMutator(generate_digit(seed)).generate()
     else:
@@ -121,7 +121,7 @@ toolbox.register("select", selNSGA2)
 toolbox.register("mutate", mutate_individual)
 
 
-def main(rand_seed=None):
+def run(dir_name, rand_seed=None):
     random.seed(rand_seed)
     start_time = datetime.now()
     starttime = time.time()
@@ -204,8 +204,8 @@ def main(rand_seed=None):
             elapsed_time = datetime.now() - start_time
             if (elapsed_time.seconds) >= INTERVAL*ii:
                 print("generating map")                
-                archive.create_report(x_test, Individual.SEEDS, gen)
-                generate_maps((INTERVAL*ii/60), gen)
+                #archive.create_report(x_test, Individual.SEEDS, gen)
+                generate_maps((INTERVAL*ii/60), gen, dir_name)
                 ii += 1
 
             # Update the statistics with the new population
@@ -222,12 +222,11 @@ def main(rand_seed=None):
     return population
 
 
-def generate_maps(execution_time, iterations):
-    rand1 = random.randint(0, 1000000000)
-    dir_name = "temp_" + str(rand1)
-    now = datetime.now().strftime("%Y%m%d%H%M%S")
+def generate_maps(execution_time, iterations, dir_name):    
+    # The experiment folder
+    now = datetime.now().strftime("%Y%m%d%H%M%S")    
     log_dir_name = "log_"+str(POPSIZE)+"_"+str(iterations)+"_"+str(execution_time)+"_"+str(now) 
-    log_dir_path = Path('logs/'+str(dirname)+"/"+str(log_dir_name))
+    log_dir_path = Path('logs/'+str(dir_name)+"/"+str(log_dir_name))
     log_dir_path.mkdir(parents=True, exist_ok=True)   
     if len(archive.get_archive()) > 0:
         ''' type #1 : Moves & Bitmaps
@@ -235,9 +234,9 @@ def generate_maps(execution_time, iterations):
             type #3 : Orientation & Bitmaps
         '''
         for i in range(1,4):
-            map_E = MapElitesMNIST(i, NGEN, POPSIZE, True, f"logs/{log_dir_name}")               
-            log_dir_path = Path(f'logs/{dir_name}/{log_dir_name}/{map_E.feature_dimensions[1].name}_{map_E.feature_dimensions[0].name}')
-            log_dir_path.mkdir(parents=True, exist_ok=True)
+            map_E = MapElitesMNIST(i, NGEN, POPSIZE, True, log_dir_path)               
+            image_dir_path = Path(f'logs/{dir_name}/{log_dir_name}/{map_E.feature_dimensions[1].name}_{map_E.feature_dimensions[0].name}')
+            image_dir_path.mkdir(parents=True, exist_ok=True)
             for ind in archive.get_archive():             
                 map_E.place_in_mapelites(ind, archive.get_archive())
 
@@ -253,14 +252,14 @@ def generate_maps(execution_time, iterations):
             covered_seeds = set()
             mis_seeds = set()
             for (i,j), value in np.ndenumerate(map_E.performances): 
-                if map_E.performances[i,j] != 2.0:
+                if map_E.performances[i,j] != np.inf:
                     covered_seeds.add(map_E.solutions[i,j].seed)
                     if map_E.performances[i,j] < 0: 
                         mis_seeds.add(map_E.solutions[i,j].seed)
                         Individual.COUNT_MISS += 1
-                        utils.print_image(f"{log_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified)
+                        utils.print_image(f"{image_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified)
                     else:
-                        utils.print_image(f"{log_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified, 'gray')
+                        utils.print_image(f"{image_dir_path}/({i},{j})", map_E.solutions[i,j].member1.purified, 'gray')
 
             report = {               
                 'Covered seeds' : len(covered_seeds),
@@ -280,13 +279,15 @@ def generate_maps(execution_time, iterations):
 
             map_E.plot_map_of_elites()
             plot_utils.plot_fives(f"logs/{dir_name}/{log_dir_name}", map_E.feature_dimensions[1].name, map_E.feature_dimensions[0].name)  
-            
+          
 
 
 if __name__ == "__main__":    
     archive = archive_manager.Archive()    
-    pop = main()
-    rand = random.randint(0,10000)
-    filename = f"logs/results_{rand}"
-    utils.generate_reports(filename)
+    now = datetime.now().strftime("%Y%m%d%H%M%S")
+    dir_name = f"temp_{now}" 
+    pop = run(dir_name)
+    
+    filename = f"logs/{dir_name}/results_{now}"
+    utils.generate_reports(filename, f"logs/{dir_name}")
 

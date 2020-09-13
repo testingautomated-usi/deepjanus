@@ -45,7 +45,7 @@ class MapElites(ABC):
             ft_bins, None,
             dtype=(object)
         )
-        self.performances = np.full(ft_bins, 2.0, dtype=float)
+        self.performances = np.full(ft_bins, np.inf, dtype=float)
 
         print("Configuration completed.")
    
@@ -94,7 +94,7 @@ class MapElites(ABC):
             ft_bins, None,
             dtype=(object)
         )
-        new_performances = np.full(ft_bins, 2.0, dtype=float)
+        new_performances = np.full(ft_bins, np.inf, dtype=float)
 
         new_solutions[0:self.solutions.shape[0], 0:self.solutions.shape[1]] = self.solutions
         new_performances[0:self.performances.shape[0], 0:self.performances.shape[1]] = self.performances
