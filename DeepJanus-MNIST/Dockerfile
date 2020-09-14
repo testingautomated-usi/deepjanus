@@ -18,7 +18,7 @@ RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Download the lastest from the repo and show the version on console
-RUN git clone --singlr-branch --branch Tara git@github.com:testingautomated-usi/DeepJanus.git deepjanus && \
+RUN git clone --single-branch --branch Tara git@github.com:testingautomated-usi/DeepJanus.git deepjanus && \
     cd deepjanus && git log --pretty=oneline
 
 # 
