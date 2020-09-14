@@ -1,5 +1,5 @@
 # this is our first build stage, it will not persist in the final image
-FROM ubuntu as download-deepjanus-mnist-private
+FROM ubuntu as download-deepjanus-private
 
 # install git
 RUN apt-get update
@@ -18,15 +18,15 @@ RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Download the lastest from the repo and show the version on console
-RUN git clone git@github.com:zohdit/DeepHyperion.git deepjanus_mnist && \
-    cd deepjanus_mnist && git log --pretty=oneline
+RUN git clone --singlr-branch --branch Tara git@github.com:testingautomated-usi/DeepJanus.git deepjanus && \
+    cd deepjanus && git log --pretty=oneline
 
 # 
 FROM python:3.6
 
 # copy the repository form the previous image
 # TODO Maybe we need to get rid of .git ?
-COPY --from=download-deepjanus-mnist-private /deepjanus_mnist /deepjanus_mnist
+COPY --from=download-deepjanus-private /deepjanus /deepjanus
 
 
 # install all the system deps
@@ -44,9 +44,9 @@ RUN git clone https://github.com/flupke/pypotrace.git
 RUN cd pypotrace && \
     pip install .
 
-RUN cd /deepjanus_mnist && \
+RUN cd /deepjanus/DeepJanus-MNIST && \
     pip install -r requirements.txt
 
 # For now the MODEL and the PROPERTIES are hardcoded in the image under /deepjanus_mnist as the 
-WORKDIR /deepjanus_mnist
+WORKDIR /deepjanus/DeepJanus-MNIST
 CMD ["/usr/local/bin/python", "main.py"]
