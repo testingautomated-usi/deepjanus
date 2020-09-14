@@ -18,8 +18,8 @@ RUN touch /root/.ssh/known_hosts
 RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Download the lastest from the repo and show the version on console
-RUN git clone --single-branch --branch Tara git@github.com:testingautomated-usi/DeepJanus.git deepjanus && \
-    cd deepjanus && git log --pretty=oneline
+RUN git clone git@github.com:testingautomated-usi/DeepJanus.git deepjanus && \
+    cd deepjanus && git checkout Tara && git pull --all && git log --pretty=oneline
 
 # 
 FROM python:3.6
@@ -44,9 +44,8 @@ RUN git clone https://github.com/flupke/pypotrace.git
 RUN cd pypotrace && \
     pip install .
 
-RUN cd /deepjanus/DeepJanus-MNIST && \
-    pip install -r requirements.txt
+WORKDIR /deepjanus/DeepJanus-MNIST
+RUN pip install -r requirements.txt
 
 # For now the MODEL and the PROPERTIES are hardcoded in the image under /deepjanus_mnist as the 
-WORKDIR /deepjanus/DeepJanus-MNIST
 CMD ["/usr/local/bin/python", "main.py"]
