@@ -5,7 +5,7 @@ from os.path import exists
 import h5py
 from tensorflow import keras
 import sys
-from properties import DATASET, POPSIZE, MODEL, MODEL2
+from properties import DATASET, POPSIZE, MODEL, MODEL2, EXPLABEL
 import numpy as np
 from utils import input_reshape, reshape
 import time
@@ -43,7 +43,10 @@ def get_min_distance_from_set(ind_index, initial_pop):
 
 
 def generate(diversity=True):
-    correct_set = range(len(x_train))
+    if EXPLABEL is None:
+        correct_set = range(len(x_train))
+    else:
+        correct_set = np.argwhere(y_train == EXPLABEL)
 
     print("Evaluating with model "+MODEL)
     model = keras.models.load_model(MODEL)
@@ -89,6 +92,7 @@ def generate(diversity=True):
     print('Checking correctness...')
     for item in range(len(xn)):
        assert(model.predict_classes(reshape(xn[int(item)])) == yn[int(item)])
+       print (model.predict_classes(reshape(xn[int(item)])))
 
     dst = "original_dataset"
     if not exists(dst):
