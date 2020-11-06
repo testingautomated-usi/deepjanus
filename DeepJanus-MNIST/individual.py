@@ -8,6 +8,7 @@ class Individual:
     SEEDS = set()
 
     def __init__(self, member1, member2):
+        self.id = Individual.COUNT
         self.seed = None
         self.distance = None
         self.sparseness = None
@@ -17,6 +18,7 @@ class Individual:
         self.member2 = member2
 
     def reset(self):
+        self.id = Individual.COUNT
         self.distance = None
         self.sparseness = None
         self.misclass = None
