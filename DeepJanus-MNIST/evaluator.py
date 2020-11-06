@@ -14,7 +14,6 @@ def evaluate_ff2(P_class_A, P_notclass_A, P_class_B, P_notclass_B):
     P2 = P_class_B - P_notclass_B
     P3 = P1 * P2
 
-    # TODO test
     if P3 < 0:
         P3 = -0.1
     return P3
@@ -28,9 +27,11 @@ def evaluate_aggregate_ff(sparseness, distance):
 def dist_from_nearest_archived(ind, population, k):
     neighbors = list()
     for ind_pop in population:
-        if ind_pop != ind:
+        if ind_pop.id != ind.id:
             d = eval_dist_individuals(ind, ind_pop)
-            neighbors.append(d)
+            if d > 0.0:
+                neighbors.append(d)
+
     neighbors.sort()
     nns = neighbors[:k]
     if k > 1:
