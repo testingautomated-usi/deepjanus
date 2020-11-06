@@ -1,4 +1,3 @@
-import itertools
 import random
 
 import vectorization_tools
@@ -11,21 +10,25 @@ from deap import base, creator, tools
 from deap.tools.emo import selNSGA2
 from tensorflow import keras
 
+import h5py
+
 import archive_manager
 from individual import Individual
-from properties import NGEN, IMG_SIZE, \
-    POPSIZE, EXPECTED_LABEL, INITIALPOP, \
-    ORIGINAL_SEEDS, RESEEDUPPERBOUND, GENERATE_ONE_ONLY
+from properties import NGEN, \
+    POPSIZE, INITIALPOP, \
+    RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET
 
 # Load the dataset.
-mnist = keras.datasets.mnist
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
+hf = h5py.File(DATASET, 'r')
+x_test = hf.get('xn')
+x_test = np.array(x_test)
+y_test = hf.get('yn')
+y_test = np.array(y_test)
 
 # Fetch the starting seeds from file
-with open(ORIGINAL_SEEDS) as f:
-    starting_seeds = f.read().split(',')[:-1]
-    random.shuffle(starting_seeds)
-    starting_seeds = starting_seeds[:POPSIZE]
+starting_seeds = [i for i in range(len(y_test))]
+random.shuffle(starting_seeds)
+starting_seeds = starting_seeds[:POPSIZE]
 
 # DEAP framework setup.
 toolbox = base.Toolbox()
@@ -37,8 +40,9 @@ creator.create("Individual", Individual, fitness=creator.FitnessMulti)
 
 def generate_digit(seed):
     seed_image = x_test[int(seed)]
+    label = y_test[int(seed)]
     xml_desc = vectorization_tools.vectorize(seed_image)
-    return Digit(xml_desc, EXPECTED_LABEL)
+    return Digit(xml_desc, label)
 
 
 def generate_individual():
@@ -62,6 +66,7 @@ def generate_individual():
         digit2 = digit1.clone()
         distance_inputs = DigitMutator(digit2).mutate()
 
+    # TODO: do not have info about the label
     individual = creator.Individual(digit1, digit2)
     individual.distance = distance_inputs
     individual.seed = seed

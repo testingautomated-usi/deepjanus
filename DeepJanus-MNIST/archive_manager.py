@@ -7,7 +7,7 @@ from utils import get_distance
 from evaluator import eval_archive_dist
 import numpy as np
 
-from properties import ARCHIVE_THRESHOLD, EXPECTED_LABEL, RESULTS_PATH, POPSIZE, NGEN, MUTLOWERBOUND, MUTUPPERBOUND, \
+from properties import ARCHIVE_THRESHOLD, RESULTS_PATH, POPSIZE, NGEN, MUTLOWERBOUND, MUTUPPERBOUND, \
     RESEEDUPPERBOUND, K_SD, MODEL
 from metrics import get_diameter, get_mindist_seed
 
@@ -74,7 +74,7 @@ class Archive:
         # Obtain correctly classified member of an individual on the frontier.
         correctly_classified_frontier = []
         for ind in solution:
-            if ind.member1.predicted_label != EXPECTED_LABEL:
+            if ind.member1.predicted_label != ind.member1.expected_label:
                 misclassified_member = ind.member1
                 correct_member = ind.member2
             else:
@@ -137,7 +137,7 @@ class Archive:
         config = {
             'popsize': str(POPSIZE),
             'generations': str(NGEN),
-            'label': str(EXPECTED_LABEL),
+            'label': str(ind.member1.expected_label),
             'archive tshd': str(ARCHIVE_THRESHOLD),
             'mut low': str(MUTLOWERBOUND),
             'mut up': str(MUTUPPERBOUND),

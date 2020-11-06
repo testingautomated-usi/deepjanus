@@ -1,6 +1,5 @@
 import numpy as np
 
-from properties import EXPECTED_LABEL
 from utils import reshape
 
 
@@ -12,7 +11,7 @@ def get_mindist_seed(solution, dataset):
         seed = reshape(dataset[int(ind.seed)])
 
         # get misclassified member
-        if ind.member1.predicted_label != EXPECTED_LABEL:
+        if ind.member1.predicted_label != ind.member1.expected_label:
             misclassified_member = ind.member1.purified
         else:
             misclassified_member = ind.member2.purified

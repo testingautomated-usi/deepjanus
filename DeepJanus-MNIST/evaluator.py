@@ -1,6 +1,6 @@
 import numpy as np
 import utils
-from properties import K, K_SD, EXPECTED_LABEL
+from properties import K, K_SD
 
 
 def evaluate_ff1(A, B):
@@ -73,14 +73,14 @@ def eval_dist_individuals(ind1, ind2):
 
 def eval_archive_dist(ind1, ind2):
 
-    if ind1.member1.predicted_label == EXPECTED_LABEL:
+    if ind1.member1.predicted_label == ind1.member1.expected_label:
         ind1_correct = ind1.member1.purified
         ind1_misclass = ind1.member2.purified
     else:
         ind1_correct = ind1.member2.purified
         ind1_misclass = ind1.member1.purified
 
-    if ind2.member1.predicted_label == EXPECTED_LABEL:
+    if ind2.member1.predicted_label == ind1.member2.expected_label:
         ind2_correct = ind2.member1.purified
         ind2_misclass = ind2.member2.purified
     else:
