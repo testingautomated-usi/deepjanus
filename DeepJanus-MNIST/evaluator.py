@@ -30,6 +30,11 @@ def dist_from_nearest_archived(ind, population, k):
             if d > 0.0:
                 neighbors.append(d)
 
+    if len(neighbors) == 0:
+        assert (len(population) > 0)
+        assert (population[0].id == ind.id)
+        return -1.0
+
     neighbors.sort()
     nns = neighbors[:k]
     if k > 1:
