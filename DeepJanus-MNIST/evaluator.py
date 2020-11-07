@@ -9,10 +9,8 @@ def evaluate_ff1(A, B):
 
 
 # calculate the misclassification ff
-def evaluate_ff2(P_class_A, P_notclass_A, P_class_B, P_notclass_B):
-    P1 = P_class_A - P_notclass_A
-    P2 = P_class_B - P_notclass_B
-    P3 = P1 * P2
+def evaluate_ff2(confidence1, confidence2):
+    P3 = confidence1 * confidence2
 
     if P3 < 0:
         P3 = -0.1

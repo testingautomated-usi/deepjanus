@@ -3,6 +3,7 @@ import random
 import vectorization_tools
 from digit_input import Digit
 from digit_mutator import DigitMutator
+from predictor import Predictor
 from utils import print_archive
 
 import numpy as np
@@ -117,6 +118,21 @@ toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("evaluate", evaluate_individual)
 toolbox.register("select", selNSGA2)
 toolbox.register("mutate", mutate_individual)
+
+def pre_evaluate_batch(invalid_ind):
+    batch_img = [i.member.purified for i in invalid_ind]
+    batch_img = np.reshape(batch_img, (-1, 28, 28, 1))
+    batch_label = ([i.member.label for i in invalid_ind])
+    batch_seed = [i.seed for i in invalid_ind]
+
+
+    corrects, confidences, predictions = (Predictor.predict(img=batch_img,
+                                                                label=batch_label,
+                                                                seed=batch_seed))
+    for ind, correct, confidence, prediction in zip(invalid_ind, corrects, confidences, predictions):
+        ind.correctly_classified = correct
+        ind.confidence = confidence
+        ind.member.predicted_label = prediction
 
 
 def main(rand_seed=None):

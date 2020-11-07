@@ -31,4 +31,6 @@ class Predictor:
         else:
             confidence_notclass = predictions[0][prediction2]
 
-        return prediction1, confidence_expclass, confidence_notclass
+        confidence = confidence_expclass - confidence_notclass
+
+        return prediction1, confidence

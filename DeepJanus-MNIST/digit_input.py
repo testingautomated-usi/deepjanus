@@ -7,8 +7,7 @@ class Digit:
         self.expected_label = label
         self.predicted_label = None
         self.purified = rasterization_tools.rasterize_in_memory(self.xml_desc)
-        self.P_class = None
-        self.P_notclass = None
+        self.confidence = None
 
     def clone(self):
         clone_digit = Digit(self.xml_desc, self.expected_label)

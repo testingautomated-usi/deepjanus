@@ -28,17 +28,15 @@ class Individual:
         self.sparseness = None
 
         if self.misclass is None:
-            self.member1.predicted_label, self.member1.P_class, self.member1.P_notclass = \
+            self.member1.predicted_label, self.member1.confidence = \
                 Predictor.predict(self.member1.purified, self.member1.expected_label)
 
-            self.member2.predicted_label, self.member2.P_class, self.member2.P_notclass = \
+            self.member2.predicted_label, self.member2.confidence = \
                 Predictor.predict(self.member2.purified, self.member2.expected_label)
 
             # Calculate fitness function 2
-            self.misclass = evaluator.evaluate_ff2(self.member1.P_class,
-                                                   self.member1.P_notclass,
-                                                   self.member2.P_class,
-                                                   self.member2.P_notclass)
+            self.misclass = evaluator.evaluate_ff2(self.member1.confidence,
+                                                   self.member2.confidence)
 
         if self.distance is None:
             # Calculate fitness function 1

@@ -36,7 +36,6 @@ GENERATE_ONE_ONLY = False
 MODEL = 'models/cnnClassifier_lowLR.h5'
 MODEL2 = 'models/cnnClassifier.h5'
 
-ORIGINAL_SEEDS = "first_generation_five"
 RESULTS_PATH = 'results'
 DATASET = 'original_dataset/janus_dataset.h5'
 EXPLABEL = 5
