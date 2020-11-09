@@ -137,6 +137,10 @@ def pre_evaluate_batch(invalid_ind):
         #member.correctly_classified = correct
         member.confidence = confidence
         member.predicted_label = prediction
+        if member.expected_label == member.predicted_label:
+            member.correctly_classified = True
+        else:
+            member.correctly_classified = False
 
 
 def main(rand_seed=None):

@@ -28,15 +28,15 @@ class Individual:
         self.sparseness = None
 
         if self.misclass is None:
-            predicted_label1, confidence1 = \
-               Predictor.predict_single(self.member1.purified, self.member1.expected_label)
-
-            predicted_label2, confidence2 = \
-               Predictor.predict_single(self.member2.purified, self.member2.expected_label)
-
-            import numpy as np
-            assert(np.abs(self.member1.confidence - confidence1) < 0.01)
-            assert (np.abs(self.member2.confidence - confidence2) < 0.01)
+            # predicted_label1, confidence1 = \
+            #    Predictor.predict_single(self.member1.purified, self.member1.expected_label)
+            #
+            # predicted_label2, confidence2 = \
+            #    Predictor.predict_single(self.member2.purified, self.member2.expected_label)
+            #
+            # import numpy as np
+            # assert(np.abs(self.member1.confidence - confidence1) < 0.01)
+            # assert (np.abs(self.member2.confidence - confidence2) < 0.01)
 
 
             #self.member1.predicted_label, self.member1.confidence = \

@@ -8,6 +8,7 @@ class Digit:
         self.expected_label = label
         self.predicted_label = None
         self.confidence = None
+        self.correctly_classified = None
 
     def clone(self):
         clone_digit = Digit(self.xml_desc, self.expected_label)
