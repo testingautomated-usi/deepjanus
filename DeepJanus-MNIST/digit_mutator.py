@@ -44,7 +44,7 @@ class DigitMutator:
         #TODO: trial
         self.digit.predicted_label = None
         self.digit.confidence = None
-        self.correctly_predicted = None
+        self.digit.correctly_classified = None
 
         return distance_inputs
 
