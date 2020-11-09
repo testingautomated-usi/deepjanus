@@ -41,6 +41,10 @@ class DigitMutator:
         self.digit.xml_desc = mutant_xml_desc
         self.digit.purified = rasterized_digit
 
+        #TODO: trial
+        self.digit.predicted_label = None
+        self.digit.confidence = None
+
         return distance_inputs
 
     def generate(self):

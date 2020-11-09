@@ -119,20 +119,24 @@ toolbox.register("evaluate", evaluate_individual)
 toolbox.register("select", selNSGA2)
 toolbox.register("mutate", mutate_individual)
 
+
 def pre_evaluate_batch(invalid_ind):
-    batch_img = [i.member.purified for i in invalid_ind]
+    batch_members = [i.member1 for i in invalid_ind if i.member1.predicted_label is None]
+    batch_members += [i.member2 for i in invalid_ind if i.member2.predicted_label is None]
+
+    batch_img = [m.purified for m in batch_members]
     batch_img = np.reshape(batch_img, (-1, 28, 28, 1))
-    batch_label = ([i.member.label for i in invalid_ind])
-    batch_seed = [i.seed for i in invalid_ind]
 
+    batch_label = ([m.expected_label for m in batch_members])
 
-    corrects, confidences, predictions = (Predictor.predict(img=batch_img,
-                                                                label=batch_label,
-                                                                seed=batch_seed))
-    for ind, correct, confidence, prediction in zip(invalid_ind, corrects, confidences, predictions):
-        ind.correctly_classified = correct
-        ind.confidence = confidence
-        ind.member.predicted_label = prediction
+    #batch_seed = [m.seed for m in batch_members]
+
+    predictions, confidences = (Predictor.predict(img=batch_img, label=batch_label))
+
+    for member, confidence, prediction in zip(batch_members, confidences, predictions):
+        #member.correctly_classified = correct
+        member.confidence = confidence
+        member.predicted_label = prediction
 
 
 def main(rand_seed=None):
@@ -153,6 +157,10 @@ def main(rand_seed=None):
     # Evaluate the individuals with an invalid fitness.
     # Note: the fitnesses are all invalid before the first iteration since they have not been evaluated
     invalid_ind = [ind for ind in population]
+    to_evaluate_ind = [ind for ind in population if ind.misclass is None]
+
+    pre_evaluate_batch(to_evaluate_ind)
+
 
     # Note: the sparseness is calculated wrt the archive. It can be calculated wrt population+archive
     # Therefore, we pass to the evaluation method the current archive.
@@ -197,6 +205,8 @@ def main(rand_seed=None):
         # Evaluate the individuals
         # NOTE: all individuals in both population and offspring are evaluated to assign crowding distance.
         invalid_ind = [ind for ind in population + offspring]
+        pre_evaluate_batch(invalid_ind)
+
         fitnesses = [toolbox.evaluate(i, archive.get_archive()) for i in invalid_ind]
 
         for ind, fit in zip(invalid_ind, fitnesses):
