@@ -14,6 +14,7 @@ class Individual:
         self.sparseness = None
         self.misclass = None
         self.aggregate_ff = None
+        self.misbehaviour = None
         self.member1 = member1
         self.member2 = member2
 
@@ -23,6 +24,7 @@ class Individual:
         self.sparseness = None
         self.misclass = None
         self.aggregate_ff = None
+        self.misbehaviour = None
 
     def evaluate(self, archive):
         self.sparseness = None
@@ -48,6 +50,8 @@ class Individual:
             # Calculate fitness function 2
             self.misclass = evaluator.evaluate_ff2(self.member1.confidence,
                                                    self.member2.confidence)
+
+            self.misbehaviour = (self.member1.correctly_classified != self.member2.correctly_classified)
 
         if self.distance is None:
             # Calculate fitness function 1

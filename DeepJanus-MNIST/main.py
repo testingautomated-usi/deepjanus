@@ -174,7 +174,7 @@ def main(rand_seed=None):
 
     # Update archive with the individuals on the decision boundary.
     for ind in population:
-        if ind.misclass < 0:
+        if ind.misbehaviour == True:
             archive.update_archive(ind)
 
     print("### Number of Individuals generated in the initial population: " + str(Individual.COUNT))
@@ -217,7 +217,7 @@ def main(rand_seed=None):
             ind.fitness.values = fit
 
         for ind in population + offspring:
-            if ind.fitness.values[1] < 0:
+            if ind.misbehaviour == True:
                 archive.update_archive(ind)
 
         # Select the next generation population
