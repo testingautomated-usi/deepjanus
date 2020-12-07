@@ -40,23 +40,23 @@ def print_archive(archive):
         filename1 = dst + basename(
             'archived_' + str(i) + '_mem1_l_' + str(ind.member1.predicted_label) + '_seed_' + str(ind.seed))
         plt.imsave(filename1, ind.member1.purified.reshape(28, 28), cmap=cm.gray, format='png')
-        loaded_label = (Predictor.predict(ind.member1.purified))
-        assert (ind.member1.predicted_label == loaded_label[0])
-        assert (ind.member1.predicted_label == Predictor.model.predict_classes(ind.member1.purified))
+        #loaded_label = (Predictor.predict(ind.member1.purified))
+        #assert (ind.member1.predicted_label == loaded_label[0])
+        #assert (ind.member1.predicted_label == Predictor.model.predict_classes(ind.member1.purified))
         np.save(filename1, ind.member1.purified)
-        loaded_label = Predictor.predict(np.load(filename1 + '.npy'))[0]
-        assert (ind.member1.predicted_label == loaded_label)
+        #loaded_label = Predictor.predict(np.load(filename1 + '.npy'))[0]
+        #assert (ind.member1.predicted_label == loaded_label)
         assert (np.array_equal(ind.member1.purified, np.load(filename1 + '.npy')))
 
         filename2 = dst + basename(
             'archived_' + str(i) + '_mem2_l_' + str(ind.member2.predicted_label) + '_seed_' + str(ind.seed))
         plt.imsave(filename2, ind.member2.purified.reshape(28, 28), cmap=cm.gray, format='png')
-        loaded_label = (Predictor.predict(ind.member2.purified))
-        assert (ind.member2.predicted_label == loaded_label[0])
-        assert (ind.member2.predicted_label == Predictor.model.predict_classes(ind.member2.purified))
+        #loaded_label = (Predictor.predict(ind.member2.purified))
+        #assert (ind.member2.predicted_label == loaded_label[0])
+        #assert (ind.member2.predicted_label == Predictor.model.predict_classes(ind.member2.purified))
         np.save(filename2, ind.member2.purified)
-        loaded_label = Predictor.predict(np.load(filename2 + '.npy'))[0]
-        assert (ind.member2.predicted_label == loaded_label)
+        #loaded_label = Predictor.predict(np.load(filename2 + '.npy'))[0]
+        #assert (ind.member2.predicted_label == loaded_label)
         assert (np.array_equal(ind.member2.purified, np.load(filename2 + '.npy')))
 
 
