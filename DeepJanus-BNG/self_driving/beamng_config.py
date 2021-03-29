@@ -18,3 +18,6 @@ class BeamNGConfig(Config):
 
         self.beamng_close_at_iteration = False
         self.beamng_evaluator = self.EVALUATOR_LOCAL_BEAMNG
+        self.BNG_HOME = r"C:/Users/vinni/bng_competition/BeamNG.research.v1.7.0.1"
+        self.BNG_USER = r"C:\Users\vinni\Documents\BeamNG.research"
+

@@ -34,24 +34,24 @@ class BeamNGIndividual(Individual):
     def evaluate(self):
         self._assert_members_not_equals()
 
-        import timeit
+        #import timeit
 
-        start = timeit.default_timer()
+        #start = timeit.default_timer()
 
         self.members_distance = self.m1.distance(self.m2)
 
-        stop = timeit.default_timer()
-        print('Time to mem dist: ', stop - start)
+        #stop = timeit.default_timer()
+        #print('Time to mem dist: ', stop - start)
 
         self.sparseness = evaluate_sparseness(self, self.archive)
 
-        stop = timeit.default_timer()
-        print('Time to sparseness: '+ str(stop - start)+ 'archive len: '+ str(len(self.archive)))
+        #stop = timeit.default_timer()
+        #print('Time to sparseness: '+ str(stop - start)+ 'archive len: '+ str(len(self.archive)))
 
         self.m1.evaluate()
         self.m2.evaluate()
-        stop = timeit.default_timer()
-        print('Time to eval: ', stop - start)
+        #stop = timeit.default_timer()
+        #print('Time to eval: ', stop - start)
 
         border = self.m1.distance_to_boundary * self.m2.distance_to_boundary
         self.oob_ff = border if border > 0 else -0.1
@@ -59,8 +59,8 @@ class BeamNGIndividual(Individual):
 
         log.info(f'evaluated {self}')
 
-        stop = timeit.default_timer()
-        print('Total Time: ', stop - start)
+        #stop = timeit.default_timer()
+        #print('Total Time: ', stop - start)
 
         return ff1, self.oob_ff
 

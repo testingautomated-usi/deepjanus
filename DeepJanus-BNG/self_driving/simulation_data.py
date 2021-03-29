@@ -11,9 +11,9 @@ from self_driving.decal_road import DecalRoad
 from core.folders import folders
 from core.misc import delete_folder_recursively
 
-SimulationDataRecordProperties = ['timer', 'damage', 'pos', 'dir', 'vel', 'gforces', 'gforces2', 'steering',
+SimulationDataRecordProperties = ['timer', 'pos', 'dir', 'vel', 'steering',
                                   'steering_input', 'brake', 'brake_input', 'throttle', 'throttle_input',
-                                  'throttleFactor', 'engineThrottle', 'wheelspeed', 'vel_kmh', 'is_oob', 'oob_counter',
+                                  'wheelspeed', 'vel_kmh', 'is_oob', 'oob_counter',
                                   'max_oob_percentage', 'oob_distance']
 
 SimulationDataRecord = namedtuple('SimulationDataRecord', SimulationDataRecordProperties)

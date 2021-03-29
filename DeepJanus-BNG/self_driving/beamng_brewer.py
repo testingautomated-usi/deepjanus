@@ -28,8 +28,8 @@ class BeamNGCamera:
 
 
 class BeamNGBrewer:
-    def __init__(self, road_nodes: List4DTuple = None):
-        self.beamng = BeamNGpy('localhost', 64256)
+    def __init__(self, road_nodes: List4DTuple = None, beamng_home=None):
+        self.beamng = BeamNGpy('localhost', 64256, home=beamng_home)
         self.vehicle: Vehicle = None
         self.camera: BeamNGCamera = None
         if road_nodes:

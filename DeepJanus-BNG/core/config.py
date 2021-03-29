@@ -26,7 +26,7 @@ class Config:
         self.simulation_name = 'beamng_nvidia_runner/sim_$(id)'
 
         #self.keras_model_file = 'self-driving-car-4600.h5'
-        self.keras_model_file = 'self-driving-car-185-2020.h5'
+        self.keras_model_file = 'self-driving-car-190-2020.h5'
 
         #self.generator_name = Config.GEN_RANDOM
         #self.generator_name = Config.GEN_RANDOM_SEEDED

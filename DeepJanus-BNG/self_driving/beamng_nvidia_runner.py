@@ -19,6 +19,7 @@ from self_driving.simulation_data_collector import SimulationDataCollector
 from self_driving.utils import get_node_coords, points_distance
 from self_driving.vehicle_state_reader import VehicleStateReader
 from udacity_integration.beamng_car_cameras import BeamNGCarCameras
+from tensorflow.keras.models import load_model
 
 log = get_logger(__file__)
 
@@ -61,7 +62,7 @@ class BeamNGNvidiaOob(BeamNGEvaluator):
 
     def _run_simulation(self, nodes) -> SimulationData:
         if not self.brewer:
-            self.brewer = BeamNGBrewer()
+            self.brewer = BeamNGBrewer(beamng_home=self.config.BNG_HOME)
             self.vehicle = self.brewer.setup_vehicle()
             self.camera = self.brewer.setup_scenario_camera()
 
@@ -87,7 +88,6 @@ class BeamNGNvidiaOob(BeamNGEvaluator):
         sim_data_collector.get_simulation_data().start()
         try:
             brewer.bring_up()
-            from keras.models import load_model
             if not self.model:
                 self.model = load_model(self.model_file)
             predict = NvidiaPrediction(self.model, self.config)
