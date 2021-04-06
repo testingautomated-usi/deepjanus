@@ -12,6 +12,7 @@ from self_driving.beamng_config import BeamNGConfig
 from self_driving.beamng_evaluator import BeamNGEvaluator
 from self_driving.beamng_member import BeamNGMember
 from self_driving.beamng_tig_maps import maps
+from self_driving.beamng_operations import operations
 from self_driving.beamng_waypoint import BeamNGWaypoint
 from self_driving.nvidia_prediction import NvidiaPrediction
 from self_driving.simulation_data import SimulationDataRecord, SimulationData
@@ -71,6 +72,7 @@ class BeamNGNvidiaOob(BeamNGEvaluator):
         beamng = brewer.beamng
         waypoint_goal = BeamNGWaypoint('waypoint_goal', get_node_coords(nodes[-1]))
         maps.install_map_if_needed()
+        operations.change_illumination(config.time_of_day)
         maps.beamng_map.generated().write_items(brewer.decal_road.to_json() + '\n' + waypoint_goal.to_json())
 
         cameras = BeamNGCarCameras()

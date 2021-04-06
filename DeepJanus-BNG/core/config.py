@@ -32,3 +32,5 @@ class Config:
         #self.generator_name = Config.GEN_RANDOM_SEEDED
         self.generator_name = Config.GEN_SEQUENTIAL_SEEDED
         self.seed_folder = 'population_HQ1'
+
+        self.time_of_day = 0.2

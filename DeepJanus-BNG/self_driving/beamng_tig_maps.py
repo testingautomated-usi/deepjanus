@@ -111,6 +111,11 @@ class Maps:
             shutil.copytree(src=self.source_map.path, dst=self.beamng_map.path)
 
 
+    def install_map(self):
+        print(f'Copying from [{self.source_map.path}] to [{self.beamng_map.path}]')
+        shutil.copytree(src=self.source_map.path, dst=self.beamng_map.path)
+
+
 global maps
 maps = Maps()
 
