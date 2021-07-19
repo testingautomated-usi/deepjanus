@@ -15,7 +15,8 @@ import archive_manager
 from individual import Individual
 from config import NGEN, \
     POPSIZE, INITIALPOP, \
-    RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET, STOP_CONDITION, STEPSIZE
+    RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET, \
+    STOP_CONDITION, STEPSIZE, DJ_DEBUG
 
 # Load the dataset.
 hf = h5py.File(DATASET, 'r')
@@ -221,7 +222,7 @@ def main(rand_seed=None):
         # Select the next generation population
         population = toolbox.select(population + offspring, POPSIZE)
 
-        if gen % STEPSIZE == 0:
+        if DJ_DEBUG and gen % STEPSIZE == 0:
             archive.create_report(x_test, Individual.SEEDS, gen)
 
         # Update the statistics with the new population
