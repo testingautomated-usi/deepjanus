@@ -1,7 +1,7 @@
 from tensorflow import keras
 import numpy as np
 
-from properties import MODEL, num_classes
+from config import MODEL, num_classes
 
 
 class Predictor:
@@ -12,12 +12,6 @@ class Predictor:
 
     @staticmethod
     def predict(img, label):
-        #explabel = (np.expand_dims(label, 0))
-
-        # Convert class vectors to binary class matrices
-        #explabel = keras.utils.to_categorical(explabel, num_classes)
-        #explabel = np.argmax(explabel.squeeze())
-        #print(img.shape)
 
         # Predictions vector
         predictions = Predictor.model.predict(img)

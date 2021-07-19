@@ -1,5 +1,12 @@
+import json
+from os import makedirs
+from os.path import join, exists
+
+from numpy import mean
+
 import evaluator
-from predictor import Predictor
+from folder import Folder
+from config import EXPLABEL
 
 
 class Individual:
@@ -10,53 +17,55 @@ class Individual:
     def __init__(self, member1, member2):
         self.id = Individual.COUNT
         self.seed = None
-        self.distance = None
+        self.members_distance = None
         self.sparseness = None
         self.misclass = None
         self.aggregate_ff = None
-        self.misbehaviour = None
-        self.member1 = member1
-        self.member2 = member2
+        self.archive_candidate = None
+        self.m1 = member1
+        self.m2 = member2
 
     def reset(self):
         self.id = Individual.COUNT
-        self.distance = None
+        self.members_distance = None
         self.sparseness = None
         self.misclass = None
         self.aggregate_ff = None
-        self.misbehaviour = None
+        self.archive_candidate = None
+
+    def to_dict(self):
+        return {'id': str(self.id),
+                'seed': str(self.seed),
+                #TODO: expected label depending on member
+                'expected_label': str(EXPLABEL),
+                'm1': str(self.m1.id),
+                'm2': str(self.m2.id)
+        }
+
+    def export(self):
+        if not exists(Folder.DST_IND):
+            makedirs(Folder.DST_IND)
+        dst = join(Folder.DST_IND, "ind"+str(self.id))
+        data = self.to_dict()
+        filedest = dst + ".json"
+        with open(filedest, 'w') as f:
+            (json.dump(data, f, sort_keys=True, indent=4))
 
     def evaluate(self, archive):
         self.sparseness = None
 
         if self.misclass is None:
-            # predicted_label1, confidence1 = \
-            #    Predictor.predict_single(self.member1.purified, self.member1.expected_label)
-            #
-            # predicted_label2, confidence2 = \
-            #    Predictor.predict_single(self.member2.purified, self.member2.expected_label)
-            #
-            # import numpy as np
-            # assert(np.abs(self.member1.confidence - confidence1) < 0.01)
-            # assert (np.abs(self.member2.confidence - confidence2) < 0.01)
-
-
-            #self.member1.predicted_label, self.member1.confidence = \
-            #    Predictor.predict(self.member1.purified, self.member1.expected_label)
-
-            #self.member2.predicted_label, self.member2.confidence = \
-            #    Predictor.predict(self.member2.purified, self.member2.expected_label)
-
             # Calculate fitness function 2
-            self.misclass = evaluator.evaluate_ff2(self.member1.confidence,
-                                                   self.member2.confidence)
+            self.misclass = evaluator.evaluate_ff2(self.m1.confidence,
+                                                   self.m2.confidence)
 
-            self.misbehaviour = (self.member1.correctly_classified != self.member2.correctly_classified)
+            self.archive_candidate = (self.m1.correctly_classified !=
+                                      self.m2.correctly_classified)
 
-        if self.distance is None:
+        if self.members_distance is None:
             # Calculate fitness function 1
-            self.distance = evaluator.evaluate_ff1(self.member1.purified,
-                                                   self.member2.purified)
+            self.members_distance = evaluator.evaluate_ff1(self.m1.purified,
+                                                           self.m2.purified)
 
         # Recalculate sparseness at each iteration
         self.sparseness = evaluator.evaluate_sparseness(self, archive)
@@ -64,6 +73,20 @@ class Individual:
             print(self.sparseness)
             print("BUG")
 
-        self.aggregate_ff = evaluator.evaluate_aggregate_ff(self.sparseness, self.distance)
+        self.aggregate_ff = evaluator.evaluate_aggregate_ff(self.sparseness,
+                                                            self.members_distance)
 
         return self.aggregate_ff, self.misclass
+
+    def mutate(self):
+        raise NotImplemented()
+
+    def distance(self, i2):
+        i1 = self
+        a = i1.m1.distance(i2.m1)
+        b = i1.m1.distance(i2.m2)
+        c = i1.m2.distance(i2.m1)
+        d = i1.m2.distance(i2.m2)
+
+        dist = mean([min(a, b), min(c, d), min(a, c), min(b, d)])
+        return dist

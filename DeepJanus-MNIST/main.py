@@ -1,23 +1,21 @@
 import random
-
-import vectorization_tools
-from digit_input import Digit
-from digit_mutator import DigitMutator
-from predictor import Predictor
-from utils import print_archive
-
 import numpy as np
 from deap import base, creator, tools
 from deap.tools.emo import selNSGA2
-from tensorflow import keras
-
 import h5py
 
+import vectorization_tools
+from mnist_member import MnistMember
+from digit_mutator import DigitMutator
+
+from predictor import Predictor
+from timer import Timer
+from utils import print_archive, print_archive_experiment
 import archive_manager
 from individual import Individual
-from properties import NGEN, \
+from config import NGEN, \
     POPSIZE, INITIALPOP, \
-    RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET
+    RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET, STOP_CONDITION, STEPSIZE
 
 # Load the dataset.
 hf = h5py.File(DATASET, 'r')
@@ -43,56 +41,48 @@ def generate_digit(seed):
     seed_image = x_test[int(seed)]
     label = y_test[int(seed)]
     xml_desc = vectorization_tools.vectorize(seed_image)
-    return Digit(xml_desc, label)
+    return MnistMember(xml_desc, label, seed)
 
 
-def generate_individual():
+def ind_from_seed(seed):
     Individual.COUNT += 1
-
-    if INITIALPOP == 'random':
-        # Choose randomly a file in the original dataset.
-        seed = random.choice(starting_seeds)
-        Individual.SEEDS.add(seed)
-    elif INITIALPOP == 'seeded':
-        # Choose sequentially the inputs from the seed list.
-        # NOTE: number of seeds should be no less than the initial population
-        assert (len(starting_seeds) == POPSIZE)
-        seed = starting_seeds[Individual.COUNT - 1]
-        Individual.SEEDS.add(seed)
-
     if not GENERATE_ONE_ONLY:
-        digit1, digit2, distance_inputs = DigitMutator(generate_digit(seed)).generate()
+        digit1, digit2, distance_inputs = \
+            DigitMutator(generate_digit(seed)).generate()
     else:
         digit1 = generate_digit(seed)
         digit2 = digit1.clone()
         distance_inputs = DigitMutator(digit2).mutate()
 
-    # TODO: do not have info about the label
     individual = creator.Individual(digit1, digit2)
-    individual.distance = distance_inputs
+    individual.members_distance = distance_inputs
     individual.seed = seed
+    return individual
 
+
+def generate_individual():
+    if INITIALPOP == 'seeded':
+        # Choose sequentially the inputs from the seed list.
+        # NOTE: number of seeds should be no less than the initial population
+        assert (len(starting_seeds) == POPSIZE)
+        seed = starting_seeds[Individual.COUNT]
+        Individual.SEEDS.add(seed)
+    # elif INITIALPOP == 'random':
+    else:
+        # Choose randomly a file in the original dataset.
+        seed = random.choice(starting_seeds)
+        Individual.SEEDS.add(seed)
+    individual = ind_from_seed(seed)
     return individual
 
 
 def reseed_individual(seeds):
-    Individual.COUNT += 1
     # Chooses randomly the seed among the ones that are not covered by the archive
     if len(starting_seeds) > len(seeds):
-        chosen_seed = random.sample(set(starting_seeds) - seeds, 1)[0]
+        seed = random.sample(set(starting_seeds) - seeds, 1)[0]
     else:
-        chosen_seed = random.choice(starting_seeds)
-
-    if not GENERATE_ONE_ONLY:
-        first_digit, second_digit, distance_inputs = DigitMutator(generate_digit(chosen_seed)).generate()
-    else:
-        digit1 = generate_digit(chosen_seed)
-        digit2 = digit1.clone()
-        distance_inputs = DigitMutator(digit2).mutate()
-
-    individual = creator.Individual(first_digit, second_digit)
-    individual.distance = distance_inputs
-    individual.seed = chosen_seed
+        seed = random.choice(starting_seeds)
+    individual = ind_from_seed(seed)
     return individual
 
 
@@ -106,11 +96,11 @@ def mutate_individual(individual):
     Individual.COUNT += 1
     # Select one of the two members of the individual.
     if random.getrandbits(1):
-        distance_inputs = DigitMutator(individual.member1).mutate(reference=individual.member2)
+        distance_inputs = DigitMutator(individual.m1).mutate(reference=individual.m2)
     else:
-        distance_inputs = DigitMutator(individual.member2).mutate(reference=individual.member1)
+        distance_inputs = DigitMutator(individual.m2).mutate(reference=individual.m1)
     individual.reset()
-    individual.distance = distance_inputs
+    individual.members_distance = distance_inputs
 
 
 toolbox.register("individual", generate_individual)
@@ -121,20 +111,23 @@ toolbox.register("mutate", mutate_individual)
 
 
 def pre_evaluate_batch(invalid_ind):
-    batch_members = [i.member1 for i in invalid_ind if i.member1.predicted_label is None]
-    batch_members += [i.member2 for i in invalid_ind if i.member2.predicted_label is None]
+    batch_members = [i.m1
+                     for i in invalid_ind
+                     if i.m1.predicted_label is None]
+    batch_members += [i.m2
+                      for i in invalid_ind
+                      if i.m2.predicted_label is None]
 
     batch_img = [m.purified for m in batch_members]
     batch_img = np.reshape(batch_img, (-1, 28, 28, 1))
 
     batch_label = ([m.expected_label for m in batch_members])
 
-    #batch_seed = [m.seed for m in batch_members]
+    predictions, confidences = (Predictor.predict(img=batch_img,
+                                                  label=batch_label))
 
-    predictions, confidences = (Predictor.predict(img=batch_img, label=batch_label))
-
-    for member, confidence, prediction in zip(batch_members, confidences, predictions):
-        #member.correctly_classified = correct
+    for member, prediction, confidence \
+            in zip(batch_members, predictions, confidences):
         member.confidence = confidence
         member.predicted_label = prediction
         if member.expected_label == member.predicted_label:
@@ -165,7 +158,6 @@ def main(rand_seed=None):
 
     pre_evaluate_batch(to_evaluate_ind)
 
-
     # Note: the sparseness is calculated wrt the archive. It can be calculated wrt population+archive
     # Therefore, we pass to the evaluation method the current archive.
     fitnesses = [toolbox.evaluate(i, archive.get_archive()) for i in invalid_ind]
@@ -174,7 +166,7 @@ def main(rand_seed=None):
 
     # Update archive with the individuals on the decision boundary.
     for ind in population:
-        if ind.misbehaviour == True:
+        if ind.archive_candidate:
             archive.update_archive(ind)
 
     print("### Number of Individuals generated in the initial population: " + str(Individual.COUNT))
@@ -187,7 +179,9 @@ def main(rand_seed=None):
     print(logbook.stream)
 
     # Begin the generational process
-    for gen in range(1, NGEN):
+    condition = True
+    gen = 1
+    while condition:
         # Vary the population.
         offspring = tools.selTournamentDCD(population, len(population))
         offspring = [toolbox.clone(ind) for ind in offspring]
@@ -196,6 +190,10 @@ def main(rand_seed=None):
         if len(archive.get_archive()) > 0:
             seed_range = random.randrange(1, RESEEDUPPERBOUND)
             candidate_seeds = archive.archived_seeds
+
+            for i in range(seed_range):
+                population[len(population) - i - 1] = reseed_individual(candidate_seeds)
+
             for i in range(len(population)):
                 if population[i].seed in archive.archived_seeds:
                     population[i] = reseed_individual(candidate_seeds)
@@ -217,20 +215,29 @@ def main(rand_seed=None):
             ind.fitness.values = fit
 
         for ind in population + offspring:
-            if ind.misbehaviour == True:
+            if ind.archive_candidate:
                 archive.update_archive(ind)
 
         # Select the next generation population
         population = toolbox.select(population + offspring, POPSIZE)
 
-        if gen % 300 == 0:
+        if gen % STEPSIZE == 0:
             archive.create_report(x_test, Individual.SEEDS, gen)
 
         # Update the statistics with the new population
         record = stats.compile(population)
         logbook.record(gen=gen, evals=len(invalid_ind), **record)
         print(logbook.stream)
+        gen += 1
 
+        if STOP_CONDITION == "iter":
+            if gen == NGEN:
+                condition = False
+        elif STOP_CONDITION == "time":
+            if not Timer.has_budget():
+                condition = False
+
+    archive.create_report(x_test, Individual.SEEDS, gen)
     print(logbook.stream)
 
     return population
@@ -239,7 +246,8 @@ def main(rand_seed=None):
 if __name__ == "__main__":
     archive = archive_manager.Archive()
     pop = main()
+    print_archive_experiment(archive.get_archive())
 
     print_archive(archive.get_archive())
-    archive.create_report(x_test, Individual.SEEDS, 'final')
+    #archive.create_report(x_test, Individual.SEEDS, 'final')
     print("GAME OVER")

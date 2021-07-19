@@ -5,12 +5,13 @@ from os.path import exists
 import h5py
 from tensorflow import keras
 import sys
-from properties import DATASET, POPSIZE, MODEL, MODEL2, EXPLABEL
+from config import DATASET, POPSIZE, MODEL, MODEL2, EXPLABEL
 import numpy as np
 from utils import input_reshape, reshape
 import time
 import csv
 import os
+
 
 def calculate_dist(index_item1, index_item2):
 
@@ -61,6 +62,7 @@ def generate(diversity=True):
     correct_set = np.intersect1d(correctly_predicted, correct_set)
 
     if diversity:
+        print("Diverse set generation")
         print("Calculating diverse set")
         original_set = list()
         print("Finding element 1")
@@ -85,9 +87,9 @@ def generate(diversity=True):
         xn = x_train[original_set]
         yn = y_train[original_set]
     else:
+        print("Random set generation")
         xn = x_train[correct_set]
         yn = y_train[correct_set]
-
 
     print('Checking correctness...')
     for item in range(len(xn)):

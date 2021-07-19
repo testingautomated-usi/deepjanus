@@ -1,6 +1,6 @@
 import numpy as np
 import utils
-from properties import K, K_SD
+from config import K, K_SD
 
 
 def evaluate_ff1(A, B):
@@ -26,7 +26,7 @@ def dist_from_nearest_archived(ind, population, k):
     neighbors = list()
     for ind_pop in population:
         if ind_pop.id != ind.id:
-            d = eval_dist_individuals(ind, ind_pop)
+            d = ind.distance(ind_pop)
             if d > 0.0:
                 neighbors.append(d)
 
@@ -60,11 +60,11 @@ def evaluate_sparseness(ind, individuals):
 
 def eval_dist_individuals(ind1, ind2):
 
-    a1 = utils.get_distance(ind1.member1.purified, ind2.member1.purified)
-    a2 = utils.get_distance(ind1.member1.purified, ind2.member2.purified)
+    a1 = utils.get_distance(ind1.m1.purified, ind2.m1.purified)
+    a2 = utils.get_distance(ind1.m1.purified, ind2.m2.purified)
 
-    b1 = utils.get_distance(ind1.member2.purified, ind2.member1.purified)
-    b2 = utils.get_distance(ind1.member2.purified, ind2.member2.purified)
+    b1 = utils.get_distance(ind1.m2.purified, ind2.m1.purified)
+    b2 = utils.get_distance(ind1.m2.purified, ind2.m2.purified)
 
     a = np.minimum(a1, a2)
     b = np.minimum(b1, b2)
@@ -77,19 +77,19 @@ def eval_dist_individuals(ind1, ind2):
 
 def eval_archive_dist(ind1, ind2):
 
-    if ind1.member1.predicted_label == ind1.member1.expected_label:
-        ind1_correct = ind1.member1.purified
-        ind1_misclass = ind1.member2.purified
+    if ind1.m1.predicted_label == ind1.m1.expected_label:
+        ind1_correct = ind1.m1.purified
+        ind1_misclass = ind1.m2.purified
     else:
-        ind1_correct = ind1.member2.purified
-        ind1_misclass = ind1.member1.purified
+        ind1_correct = ind1.m2.purified
+        ind1_misclass = ind1.m1.purified
 
-    if ind2.member1.predicted_label == ind1.member2.expected_label:
-        ind2_correct = ind2.member1.purified
-        ind2_misclass = ind2.member2.purified
+    if ind2.m1.predicted_label == ind1.m2.expected_label:
+        ind2_correct = ind2.m1.purified
+        ind2_misclass = ind2.m2.purified
     else:
-        ind2_correct = ind2.member2.purified
-        ind2_misclass = ind2.member1.purified
+        ind2_correct = ind2.m2.purified
+        ind2_misclass = ind2.m1.purified
 
     dist1 = utils.get_distance(ind1_correct, ind2_correct)
     dist2 = utils.get_distance(ind1_misclass, ind2_misclass)

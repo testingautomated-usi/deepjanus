@@ -1,7 +1,12 @@
 # GA Setup
 POPSIZE = 100
-NGEN = 4000
 
+STOP_CONDITION = "iter"
+#STOP_CONDITION = "time"
+
+NGEN = 4000
+RUNTIME = 3600
+STEPSIZE = 10
 # Mutation Hyperparameters
 # range of the mutation
 MUTLOWERBOUND = 0.01
@@ -33,9 +38,16 @@ INITIALPOP = 'seeded'
 
 GENERATE_ONE_ONLY = False
 
-MODEL = 'models/cnnClassifier_lowLR.h5'
-MODEL2 = 'models/cnnClassifier.h5'
+MODEL2 = 'models/cnnClassifier_lowLR.h5'
+MODEL = 'models/cnnClassifier.h5'
+#MODEL = "models/regular3"
+#MODEL = 'models/cnnClassifier_001.h5'
+#MODEL = 'models/cnnClassifier_op.h5'
 
 RESULTS_PATH = 'results'
-DATASET = 'original_dataset/janus_dataset.h5'
+REPORT_NAME = 'stats.csv'
+DATASET = 'original_dataset/janus_dataset_comparison.h5'
 EXPLABEL = 5
+
+#TODO: set interpreter
+INTERPRETER = '/home/vin/yes/envs/tf_gpu/bin/python'
