@@ -20,6 +20,7 @@ Run the image by typing in the terminal the following commands:
 docker run -it --rm p1ndsvin/ubuntu:dj
 cd venvs
 . .djvenv/bin/activate
+cd ..
 ```
 
 ## Step 2: Run DeepJanus ##
