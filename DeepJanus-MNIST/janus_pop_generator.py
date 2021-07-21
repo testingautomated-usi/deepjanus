@@ -14,7 +14,13 @@ import os
 
 
 def calculate_dist(index_item1, index_item2):
-
+    """
+    Compute distance between two inputs,
+    the memoization allows higher speed
+    :param index_item1: index of the input in the original dataset(int)
+    :param index_item2: index of the input in the original dataset(int)
+    :return: distance between the inputs
+            """
     def memoized_dist(index_item1, index_item2):
         index_str = tuple(sorted([index_item1, index_item2]))
         if index_str in cache:
@@ -28,13 +34,13 @@ def calculate_dist(index_item1, index_item2):
     return memoized_dist(index_item1, index_item2)
 
 
-def olddist_(index_item1, index_item2):
-    ind = reshape(x_train[index_item1])
-    initial_ind = reshape(x_train[index_item2])
-    return np.linalg.norm(initial_ind - ind)
-
-
 def get_min_distance_from_set(ind_index, initial_pop):
+    """
+    returns the minimum distance of an input from a set of inputs
+    :param ind_index: index of the input (int)
+    :param initial_pop: list of indexes of inputs([int])
+    :return: minimum distance of the input from the set (float)
+    """
     distances = list()
     for initial_ind_index in initial_pop:
         d = calculate_dist(ind_index, initial_ind_index)
@@ -44,16 +50,25 @@ def get_min_distance_from_set(ind_index, initial_pop):
 
 
 def generate(diversity=True):
+    """
+    Generates a dataset of inputs
+    as h5 file saved at the path DATASET
+    of size POPSIZE
+    correctly classified by MODEL1 and MODEL2
+    having label EXPLABEL (any label if EXPLABEL is None)
+    :param diversity: (bool) if True greedily builds a diverse dataset
+    """
+
     if EXPLABEL is None:
-        correct_set = range(len(x_train))
+        gtruth_set = range(len(x_train))
     else:
-        correct_set = np.argwhere(y_train == EXPLABEL)
+        gtruth_set = np.argwhere(y_train == EXPLABEL)
 
     print("Evaluating with model "+MODEL)
     model = keras.models.load_model(MODEL)
     prediction = model.predict_classes(input_reshape(x_train))
     correctly_predicted = np.argwhere(prediction == y_train)
-    correct_set = np.intersect1d(correctly_predicted, correct_set)
+    correct_set = np.intersect1d(correctly_predicted, gtruth_set)
 
     print("Evaluating with model " + MODEL2)
     model = keras.models.load_model(MODEL2)
