@@ -1,5 +1,5 @@
 PyGObject==3.36.1
-deap == 1.2.2
+deap==1.2.2
 matplotlib==3.2.1
 pycairo==1.19.1
 tensorflow==2.3.0
