@@ -1,4 +1,4 @@
-# Test Input Generator for MNIST #
+# Test Input Generator for MNIST - Detailed Installation Guide #
 
 ## General Information ##
 This folder contains the application of the DeepJanus approach to the handwritten digit classification problem.
