@@ -24,7 +24,7 @@ cd ..
 ```
 
 ## Step 2: Run DeepJanus ##
-Use the following commands to start a run of DeepJanus-MNIST:
+Use the following commands to start a rapid run of DeepJanus-MNIST:
 
 ```
 cd deepjanus/DeepJanus-MNIST
