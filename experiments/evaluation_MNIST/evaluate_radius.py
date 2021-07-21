@@ -58,7 +58,6 @@ def writeCsvLine(filename, row):
         create_csv_results_file_header(filename)
 
 
-
 for m in models:
     for r in runs:
         path = os.path.join(experiments_folder, m, r, 'results','archive')

@@ -6,8 +6,8 @@ import numpy as np
 import imageio
 
 
-def euclidean_distance(imageA, imageB):
-    dist = np.linalg.norm(imageA - imageB)
+def euclidean_distance(image1, image2):
+    dist = np.linalg.norm(image1 - image2)
     return dist
 
 
