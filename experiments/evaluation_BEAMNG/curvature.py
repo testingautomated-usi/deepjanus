@@ -1,5 +1,5 @@
 # Python3 implementation of the approach
-from math import sqrt, degrees, radians
+from math import sqrt
 
 
 # Function to find the circle on
@@ -67,4 +67,3 @@ if __name__ == "__main__":
     print(r)
 
 # This code is contributed by Ryuga
-

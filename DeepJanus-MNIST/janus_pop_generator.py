@@ -81,12 +81,12 @@ def generate(diversity=True):
         print("Calculating diverse set")
         original_set = list()
         print("Finding element 1")
+        # The first element is chosen randomly
         starting_point = random.choice(correct_set)
         original_set.append(starting_point.item())
         correct_set = np.setdiff1d(correct_set, original_set)
 
         popsize = POPSIZE
-
         i = 0
         while i < popsize-1:
             print("Finding element "+str(i+2))
@@ -106,10 +106,10 @@ def generate(diversity=True):
         xn = x_train[correct_set]
         yn = y_train[correct_set]
 
-    print('Checking correctness...')
-    for item in range(len(xn)):
-       assert(model.predict_classes(reshape(xn[int(item)])) == yn[int(item)])
-       print (model.predict_classes(reshape(xn[int(item)])))
+    #print('Checking correctness...')
+    #for item in range(len(xn)):
+    #   assert(model.predict_classes(reshape(xn[int(item)])) == yn[int(item)])
+    #   print (model.predict_classes(reshape(xn[int(item)])))
 
     dst = "original_dataset"
     if not exists(dst):
@@ -130,6 +130,7 @@ if __name__ == "__main__":
     mnist = keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     if len(sys.argv) == 1:
+        # By default generate a diverse dataset
         generate()
     else:
         generate(diversity=False)
