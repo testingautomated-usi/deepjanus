@@ -2,7 +2,7 @@ import random
 import xml.etree.ElementTree as ET
 import re
 from random import randint, uniform
-from properties import MUTLOWERBOUND, MUTUPPERBOUND, MUTOFPROB
+from config import MUTLOWERBOUND, MUTUPPERBOUND, MUTOFPROB
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
 

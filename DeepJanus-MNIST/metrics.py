@@ -1,6 +1,5 @@
 import numpy as np
 
-from properties import EXPECTED_LABEL
 from utils import reshape
 
 
@@ -12,11 +11,22 @@ def get_mindist_seed(solution, dataset):
         seed = reshape(dataset[int(ind.seed)])
 
         # get misclassified member
-        if ind.member1.predicted_label != EXPECTED_LABEL:
-            misclassified_member = ind.member1.purified
+        if ind.m1.predicted_label != ind.m1.expected_label:
+            misclassified_member = ind.m1.purified
         else:
-            misclassified_member = ind.member2.purified
+            misclassified_member = ind.m2.purified
         dist = np.linalg.norm(misclassified_member - seed)
+        min_distances.append(dist)
+    mindist = np.mean(min_distances)
+    return mindist
+
+
+def get_radius_reference(solution, reference):
+    # Calculate the distance between each misclassified digit and the seed (mindist metric)
+    min_distances = list()
+    for sol in solution:
+        digit = sol.purified
+        dist = np.linalg.norm(digit - reference)
         min_distances.append(dist)
     mindist = np.mean(min_distances)
     return mindist

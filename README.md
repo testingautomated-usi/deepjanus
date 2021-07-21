@@ -32,9 +32,13 @@ Here is an example BibTeX entry:
 ```
 
 ## License ##
-The software we developed is distributed under MIT license. See the [LICENSE.md](/LICENSE) file.
+The software we developed is distributed under MIT license. See the [license](/LICENSE) file.
 
 ## Contacts
 
 For any related question, please contact Vincenzo Riccio ([vincenzo.riccio@usi.ch](mailto:vincenzo.riccio@usi.ch)) 
 or Paolo Tonella ([paolo.tonella@usi.ch](mailto:paolo.tonella@usi.ch)).
+
+## DOI
+
+[![DOI](https://zenodo.org/badge/277482412.svg)](https://zenodo.org/badge/latestdoi/277482412)

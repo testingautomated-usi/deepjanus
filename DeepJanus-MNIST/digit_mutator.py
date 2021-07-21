@@ -2,8 +2,8 @@ import random
 import mutation_manager
 import rasterization_tools
 import vectorization_tools
-from digit_input import Digit
-from properties import MUTOPPROB, EXPECTED_LABEL
+from mnist_member import MnistMember
+from config import MUTOPPROB
 from utils import get_distance
 
 
@@ -11,6 +11,7 @@ class DigitMutator:
 
     def __init__(self, digit):
         self.digit = digit
+        self.seed = digit.seed
 
     def mutate(self, reference=None):
         # Select mutation operator.
@@ -22,6 +23,7 @@ class DigitMutator:
 
         condition = True
         counter_mutations = 0
+        distance_inputs = 0
         while condition:
             counter_mutations += 1
             mutant_vector = mutation_manager.mutate(self.digit.xml_desc, mutation, counter_mutations/20)
@@ -40,6 +42,9 @@ class DigitMutator:
 
         self.digit.xml_desc = mutant_xml_desc
         self.digit.purified = rasterized_digit
+        self.digit.predicted_label = None
+        self.digit.confidence = None
+        self.digit.correctly_classified = None
 
         return distance_inputs
 
@@ -53,22 +58,30 @@ class DigitMutator:
 
         condition = True
         counter_mutations = 0
+        distance_inputs = 0
         while condition:
             counter_mutations += 1
-            vector1, vector2 = mutation_manager.generate(self.digit.xml_desc, mutation)
+            vector1, vector2 = mutation_manager.generate(
+                self.digit.xml_desc,
+                mutation)
             v1_xml_desc = vectorization_tools.create_svg_xml(vector1)
             rasterized_digit1 = rasterization_tools.rasterize_in_memory(v1_xml_desc)
 
             v2_xml_desc = vectorization_tools.create_svg_xml(vector2)
             rasterized_digit2 = rasterization_tools.rasterize_in_memory(v2_xml_desc)
 
-            distance_inputs = get_distance(rasterized_digit1, rasterized_digit2)
+            distance_inputs = get_distance(rasterized_digit1,
+                                           rasterized_digit2)
 
             if distance_inputs != 0:
                 condition = False
 
-        first_digit = Digit(v1_xml_desc, EXPECTED_LABEL)
-        second_digit = Digit(v2_xml_desc, EXPECTED_LABEL)
+        first_digit = MnistMember(v1_xml_desc,
+                                  self.digit.expected_label,
+                                  self.seed)
+        second_digit = MnistMember(v2_xml_desc,
+                                   self.digit.expected_label,
+                                   self.seed)
         first_digit.purified = rasterized_digit1
         second_digit.purified = rasterized_digit2
         return first_digit, second_digit, distance_inputs
