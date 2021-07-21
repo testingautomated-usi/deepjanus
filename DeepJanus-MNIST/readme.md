@@ -62,6 +62,12 @@ apt install -y git
 
 To check the correct installation of git, insert the command git in the terminal. If git is correctly installed, the usage information will be shown.
 
+### Cloning this repo ###
+Use the following command to clone the repository
+``` 
+git clone https://github.com/testingautomated-usi/deepjanus.git
+```
+
 ### Installing Python Binding to the Potrace library ###
 Instructions provided by https://github.com/flupke/pypotrace.
 
