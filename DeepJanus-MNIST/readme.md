@@ -31,7 +31,7 @@ And check if it is correctly installed, by typing the following command:
 $ python3
 ```
 
-You should have a message that tells you are using python 3.6.x, similar to the following:
+You should have a message that tells you are using python 3.6.*, similar to the following:
 
 ``` 
 Python 3.6.9 (default, Apr 18 2020, 01:56:04) 
@@ -71,17 +71,18 @@ Install system dependencies in your environment (it is not needed to install the
 apt-get install build-essential python-dev libagg-dev libpotrace-dev pkg-config 
 ```
 
-Install pypotrace:
+Install pypotrace (commit `76c76be2458eb2b56fcbd3bec79b1b4077e35d9e`):
 
 ```
 git clone https://github.com/flupke/pypotrace.git
 cd pypotrace
+git checkout 76c76be2458eb2b56fcbd3bec79b1b4077e35d9e
 pip3 install numpy
 pip3 install .
 cd ..
 ```
 
-If the following does not crash, pypotrace is correctly installed:
+If the following command does not crash, pypotrace is correctly installed:
 
 ``` 
 python3
@@ -101,7 +102,7 @@ And
 ```apt-get install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0 librsvg2-dev```
 
 
-Verify that cairo has been correctly installed:
+Verify that `cairo` has been correctly installed:
 
 ``` 
 $ python3
@@ -123,9 +124,9 @@ Otherwise, you can manually install each required library listed in the requirem
 
 ### Input ###
 
-* A trained model in h5 format. The default one is in the folder models;
-* A list of seeds used for the input generation. In this implementation, the seeds are indexes of elements of the MNIST dataset. The default list is in the file _first_generation_five_;
-* _properties.py_ containing the configuration of the tool selected by the user.
+* A trained model in h5 format. The default one is in the folder `models`;
+* A list of seeds used for the input generation. The default list is in the folder `original_dataset`;
+* `config.py` containing the configuration of the tool selected by the user.
 
 ### Output ###
 When the run is finished, the tool produces the following outputs in the folder specified by the user:
