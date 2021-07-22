@@ -9,6 +9,7 @@ The package is structured as follows:
 
 * [__DeepJanus-MNIST__](/DeepJanus-MNIST) contains the DeepJanus tool adapted to the handwritten digit classification case study and the instructions on how to use it;
 * [__DeepJanus-BNG__](/DeepJanus-BNG) contains the DeepJanus tool adapted to the self-driving car case study and the instructions on how to use it;
+* [__DeepJanus-UE__](/DeepJanus-UE) contains the DeepJanus tool adapted to the eye gaze prediction case study and the instructions on how to use it;
 * [__experiments__](/experiments) contains the raw experimental data reported in the paper and the scripts to obtain the data.
 
 _Note:_ each sub-package contains further specific instructions.
