@@ -40,10 +40,11 @@ python main.py
 * `config.py` containing the configuration of the tool selected by the user.
 
 ### Output ###
-When the run is finished, the tool produces the following outputs in the folder specified by the user:
-* _config.json_ reporting the configuration of the tool;
-* _report.json_ containing the final report of the run;
-* the folder _archive_ containing the generated inputs (both in array and image format).
+When the run is finished, the tool produces a folder named `run_x` (where `x` is the timestamp of the run) located in the folder `runs`. The output folder contains
+the following outputs:
+* `config.json` reporting the configuration of the tool;
+* `stats.csv` containing the final report of the run;
+* the folder `archive` containing the generated inputs (both in npy array and image format).
 
 ## Troubleshooting ##
 
