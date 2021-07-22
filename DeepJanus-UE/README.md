@@ -90,7 +90,7 @@ The folder Sikuli-jars contains a version of SikuliX downloaded from the [offici
 
 > **NOTE**: We already provided examples of these images in the [sikulix_scripts/unityeyes.sikuli folder](sikulix_scripts/unityeyes.sikuli/) but you most probably have to replace them to match your own screen resolution.
 
-* Run the Sikulix IDE in [Sikuli_jars/sikulixide-2.0.4.jar](Sikuli_jars/) (you can simply double click on it). It will automatically install the Jython standalone version.
+* Run the Sikulix IDE in [Sikuli_jars/sikulixide-2.0.4.jar](Sikuli-jars/) (you can simply double click on it). It will automatically install the Jython standalone version.
 * Open [sikulix_scripts/unityeyes.sikuli/unityeyes.py](sikulix_scripts/unityeyes.sikuli/unityeyes.py) inside the Sikulix IDE.
 * Press the Run button to verify that the Sikulix script is able to find and interact with all the GUI widgets
 
@@ -98,7 +98,7 @@ The folder Sikuli-jars contains a version of SikuliX downloaded from the [offici
 
 > **NOTE**: Please note that a computer should have a monitor connected for SikuliX to work. Please, also note that pop-up windows (such as the notification of a low battery) can disrupt the work of SikuliX.
 
-### Step 5: Run DeepMetis
+### Step 5: Run DeepJanus
 
 Open terminal and go in the directory where DeepJanus-UE is installed.
 If you used a virtual environment, activate the virtual environment.
