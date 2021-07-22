@@ -51,9 +51,9 @@ the following outputs:
 * If tensorflow cannot be installed successfully, try to upgrade the pip version. Tensorflow cannot be installed by old versions of pip. We recommend the pip version 20.1.1.
 * If the import of cairo, potrace or other modules fails, check that the correct version is installed. The correct version is reported in the file requirements.txt. The version of a module can be checked with the following command:
 ```
-$ pip3 show modulename | grep Version
+$ pip show modulename | grep Version
 ```
 To fix the problem and install a specific version, use the following command:
 ```
-$ pip3 install 'modulename==moduleversion' --force-reinstall
+$ pip install 'modulename==moduleversion' --force-reinstall
 ```
