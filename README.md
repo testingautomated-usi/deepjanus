@@ -2,7 +2,7 @@
 
 ## General Information ##
 This repository contains the tools and the data of the paper "Model-based Exploration of the Frontier of Behaviours for Deep Learning System Testing"
- by V. Riccio and P. Tonella, to be published in the Proceedings of the ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering (ESEC/FSE 2020).
+ by V. Riccio and P. Tonella, published in the [Proceedings of the ACM Joint European Software Engineering Conference and Symposium on the Foundations of Software Engineering (ESEC/FSE 2020)](https://dl.acm.org/doi/abs/10.1145/3368089.3409730).
 
 ## Repository Structure ##
 The package is structured as follows:
