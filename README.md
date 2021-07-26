@@ -16,7 +16,7 @@ _Note:_ each sub-package contains further specific instructions.
 
 ## Reference
 
-If you use our work in your research, or it helps it, or if you simply like it, please cite DeepJanus in your publications. 
+If you use our work, please cite DeepJanus in your publications. 
 Here is an example BibTeX entry:
 
 ```
