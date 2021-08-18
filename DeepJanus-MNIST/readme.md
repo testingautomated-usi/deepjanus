@@ -4,7 +4,7 @@
 This folder contains the application of the DeepJanus approach to the handwritten digit classification problem.
 The following instructions allow to rapidly run DeepJanus, without configuring your environment from scratch.
 
-> NOTE: If you want to configure your machine to run DeepHyperion-MNIST, please read our [__detailed installation guide__](FULL_INSTALL.md)
+> NOTE: If you want to configure your machine to run DeepJanus-MNIST, please read our [__detailed installation guide__](FULL_INSTALL.md)
 
 ## Step 1: Configure the environment  ##
 
