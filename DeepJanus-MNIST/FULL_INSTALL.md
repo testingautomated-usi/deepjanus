@@ -68,6 +68,29 @@ Use the following command to clone the repository
 git clone https://github.com/testingautomated-usi/deepjanus.git
 ```
 
+### Creating a Python virtual environment ###
+
+Install the `venv` module in the docker container:
+
+``` 
+apt install -y python3-venv
+```
+
+Create the python virtual environment:
+
+```
+cd deepjanus/DeepJanus-MNIST
+python3 -m venv .venv
+```
+
+Activate the python virtual environment and updated `pip` again (venv comes with an old version of the tool):
+
+```
+. .venv/bin/activate
+pip install --upgrade pip
+```
+
+
 ### Installing Python Binding to the Potrace library ###
 Instructions provided by https://github.com/flupke/pypotrace.
 
@@ -83,15 +106,15 @@ Install pypotrace (commit `76c76be2458eb2b56fcbd3bec79b1b4077e35d9e`):
 git clone https://github.com/flupke/pypotrace.git
 cd pypotrace
 git checkout 76c76be2458eb2b56fcbd3bec79b1b4077e35d9e
-pip3 install numpy
-pip3 install .
+pip install numpy
+pip install .
 cd ..
 ```
 
 If the following command does not crash, pypotrace is correctly installed:
 
 ``` 
-python3
+python
 >>> import potrace
 >>>
 ```
@@ -108,21 +131,13 @@ And
 ```apt-get install libgirepository1.0-dev gcc libcairo2-dev pkg-config python3-dev gir1.2-gtk-3.0 librsvg2-dev```
 
 
-Verify that `cairo` has been correctly installed:
-
-``` 
-$ python3
->>> import cairo
->>>
-```
-
 ### Installing Other Dependencies ###
 
 This tool has other dependencies such as tensorflow and deap.
 
 To easily install the dependencies with pip, we suggest to go in the folder where you extracted DeepJanus-MNIST and run the command:
 
-```pip3 install -r requirements.txt```
+```pip install -r requirements.txt```
 
 Otherwise, you can manually install each required library listed in the requirements.txt file using pip.
 
@@ -142,16 +157,16 @@ When the run is finished, the tool produces the following outputs in the folder 
 
 ### Run the Tool ###
 Run the command:
-`python3 main.py`
+`python main.py`
 
 ### Troubleshooting ###
 
 * If tensorflow cannot be installed successfully, try to upgrade the pip version. Tensorflow cannot be installed by old versions of pip. We recommend the pip version 20.1.1.
 * If the import of cairo, potrace or other modules fails, check that the correct version is installed. The correct version is reported in the file requirements.txt. The version of a module can be checked with the following command:
 ```
-$ pip3 show modulename | grep Version
+$ pip show modulename | grep Version
 ```
 To fix the problem and install a specific version, use the following command:
 ```
-$ pip3 install 'modulename==moduleversion' --force-reinstall
+$ pip install 'modulename==moduleversion' --force-reinstall
 ```
