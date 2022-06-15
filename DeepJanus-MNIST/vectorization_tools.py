@@ -53,3 +53,27 @@ def vectorize(image):
     path = bmp.trace()
     desc = createSVGpath(path)
     return create_svg_xml(desc)
+
+def getSVGpathControlPoints(path):
+    
+    list_of_control_points = []
+    # Iterate over path curves
+    for curve in path:
+        for segment in curve:
+            if segment.is_corner:
+                list_of_control_points.append((segment.c[0],segment.c[1]))
+                list_of_control_points.append((segment.end_point[0],segment.end_point[1]))                
+            else:
+                list_of_control_points.append((segment.c1[0],segment.c1[1]))
+                list_of_control_points.append((segment.c2[0],segment.c2[1]))
+                list_of_control_points.append((segment.end_point[0],segment.end_point[1]))               
+    return list_of_control_points
+
+def getImageControlPoints(image):
+    array = preprocess(image)
+    # use Potrace lib to obtain a SVG path from a Bitmap
+    # Create a bitmap from the array
+    bmp = potrace.Bitmap(array)
+    # Trace the bitmap to a path
+    path = bmp.trace()
+    return getSVGpathControlPoints(path)
