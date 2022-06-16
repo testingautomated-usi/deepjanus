@@ -78,6 +78,8 @@ A new python file `attention_maps.py` was addedd to the directory. Inside this f
   * ### Outputs: ###
     * `list_of_ControlPointsInsideRegion`: A list containing the positions (tuples) of the SVG path points inside the max attention square patch.
     * `Elapsed time`: Elapsed time to run the function.
+  * ### Illustration: ###
+<img src="imgs/mth1.png" width="400"></img>
 
 * `AM_get_attetion_svg_points_images_mth2`: This function will return a list containing the SVG path points and the respective weights for the random choice of a number in a non-unfiform distribution. Differently from the previous function, the sum of the attention pixels is performed only around the positions of the SVG path points (square patch). After saving the value of the attetion maps for each SVG path point, the script will associate a weight for each point proportional to the value of the attention sum around their respective positions.
   * ### Inputs: ###
@@ -87,6 +89,8 @@ A new python file `attention_maps.py` was addedd to the directory. Inside this f
   * ### Outputs: ###
     * `list_of_points_and_weights`: A list containing the positions (tuples) of the SVG path points and the respective non-uniform distribution weights.
     * `Elapsed time`: Elapsed time to run the function.
+  * ### Illustration: ###
+<img src="imgs/mth2.png" width="400"></img>
 
 * ### Examples: ###
 ````
