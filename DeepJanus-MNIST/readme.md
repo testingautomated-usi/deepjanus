@@ -82,8 +82,29 @@ A new python file `attention_maps.py` was addedd to the directory. Inside this f
 * `AM_get_attetion_svg_points_images_mth2`: This function will return a list containing the SVG path points and the respective weights for the random choice of a number in a non-unfiform distribution. Differently from the previous function, the sum of the attention pixels is performed only around the positions of the SVG path points (square patch). After saving the value of the attetion maps for each SVG path point, the script will associate a weight for each point proportional to the value of the attention sum around their respective positions.
   * ### Inputs: ###
     * `images`: A numpy array of the image to be processed with dimensions (x, 28, 28) where x>=1
-    * `sqr_size`: The size of the square patch which the sums of the attention pixels will be performed.
+    * `sqr_size`: The size of the square patch which the sums of the attention pixels will be performed. Must be 3 or 5.
     * `model`: The model object to be used to predict to predict the digit's value.
   * ### Outputs: ###
     * `list_of_points_and_weights`: A list containing the positions (tuples) of the SVG path points and the respective non-uniform distribution weights.
     * `Elapsed time`: Elapsed time to run the function.
+
+* ### Examples: ###
+````
+#------------Example how to use------------#
+
+load the MNIST dataset
+mnist = keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+model = keras.models.load_model(MODEL)
+
+images = x_test[:2]
+
+print("Method1:\n")
+list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(images, 3, 3, model)
+print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
+
+print("Method2:\n")
+list_of_points_and_probalities, elapsed_time = AM_get_attetion_svg_points_images_mth2(images, 3, model)
+print(list_of_points_and_probalities,"\n", elapsed_time,"\n")
+````
