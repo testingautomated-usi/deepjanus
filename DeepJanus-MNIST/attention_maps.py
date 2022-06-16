@@ -155,18 +155,18 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size, i):
     # print("SUM XAI TEST:",sum_test)
 
     #Render XAI Images
-    f, ax = plt.subplots()
-    heatmap = np.uint8(cm.jet(xai_image) * 255)
-    ax.set_title("Time: " + str((end_time - start_time)))
-    ax.imshow(heatmap, cmap='jet')
-    ax.scatter(*zip(*svg_path_list),s=80)
+    # f, ax = plt.subplots()
+    # heatmap = np.uint8(cm.jet(xai_image) * 255)
+    # ax.set_title("Time: " + str((end_time - start_time)))
+    # ax.imshow(heatmap, cmap='jet')
+    # ax.scatter(*zip(*svg_path_list),s=80)
 
-    for z, sum_value in enumerate(xai_list):
-        ax.annotate(round((sum_value/sum_xai_list)*100,2), (svg_path_list[z][0], svg_path_list[z][1]))
-    plt.tight_layout()
-    plt.savefig("./xai/gradcam++/"+str(i)+"mth3_sqr=3_opt1.png")
+    # for z, sum_value in enumerate(xai_list):
+    #     ax.annotate(round((sum_value/sum_xai_list)*100,2), (svg_path_list[z][0], svg_path_list[z][1]))
+    # plt.tight_layout()
+    # plt.savefig("./xai/gradcam++/"+str(i)+"mth3_sqr=3_opt1.png")
 
-    plt.cla()
+    # plt.cla()
 
     return final_list, (end_time - start_time)
 
@@ -205,8 +205,16 @@ def getControlPointsInsideAttRegion(x,y,x_dim,y_dim, controlPoints):
 
     return list_of_points
 
-def AM_get_attetion_svg_points_image(image, x_patch_size, y_patch_size, model): # images should have the shape: (28, 28) where x>=1
+def AM_get_attetion_svg_points_image(image, x_patch_size, y_patch_size, model): # images should have the shape: (28, 28)
+    """
+    Does the same as AM_get_attetion_svg_points_images_mth1. The difference is that this function computes a single image with the format (28, 28). Use AM_get_attetion_svg_points_images_mth1. 
 
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param model: The model object that will predict the value of the digit in the image 
+    :return: A list of point positions that are inside the region found.
+    """
     images = image.reshape(1, 28, 28)
 
     xai = get_XAI_image(images, model)
@@ -219,8 +227,16 @@ def AM_get_attetion_svg_points_image(image, x_patch_size, y_patch_size, model): 
 
     return list_of_ControlPointsInsideRegion, elapsed_time
 
-def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, model): # images should have the shape: (x, 28, 28) where x>=1
+def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, model):
+    """
+    AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
 
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param model: The model object that will predict the value of the digit in the image 
+    :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
     xai = get_XAI_image(images, model)
 
     # x, y = get_attetion_region(cam, images)
@@ -234,30 +250,37 @@ def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, m
         list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
 
     return list_of_ControlPointsInsideRegion, total_elapsed_time
-
+    """
     #-----------------Structure of the list returned----------------#
-    # Start of the list -> [
-    #                         image_0 (list)-> [                             
-    #                                 Position (x, y) of point_0 of image_0(tuple) -> (x0,y0),                                
-    #                                 Position (x, y) of point_1 of image_0(tuple) -> (x1,y1),
-    #                                 (x2,y2),
-    #                                   .
-    #                                   .
-    #                                   .
-    #                                 (xn,yn)
-    #                         ],
-    #                         image_1 (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)],  
-    #                         image_2 (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)],
-    #                           .
-    #                           .
-    #                           .
-    #                         image_n (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)]      
-    #
-    # End of the list -> ]
+     Start of the list -> [
+                             image_0 (list)-> [                             
+                                     Position (x, y) of point_0 of image_0(tuple) -> (x0,y0),                                
+                                     Position (x, y) of point_1 of image_0(tuple) -> (x1,y1),
+                                     (x2,y2),
+                                       .
+                                       .
+                                       .
+                                     (xn,yn)
+                             ],
+                             image_1 (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)],  
+                             image_2 (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)],
+                               .
+                               .
+                               .
+                             image_n (list) -> [(x0,y0), (x1,y1), (x2,y2), (x3,y3), ... (xn,yn)]      
+    
+     End of the list -> ]
     #----------------- END Structure of the list returned----------------#
+    """
+def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model):
+    """
+    AM_get_attetion_svg_points_images_mth2 Calculate the attetion score around each SVG path point and return a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points
 
-def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model): # images should have the shape: (x, 28, 28) where x>=1
-
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param sqr_size: X and Y size of the square region
+    :param model: The model object that will predict the value of the digit in the image 
+    :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
     xai = get_XAI_image(images, model)
 
     # x, y = get_attetion_region(cam, images)
@@ -271,36 +294,36 @@ def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model): # images sh
         total_elapsed_time += elapsed_time
 
     return list_of_points_and_weights, total_elapsed_time
-
+    """
     #-----------------Structure of the list returned----------------#
-    # Start of the list -> [
-    #                         image_0 (list)-> [
-    #                             point_0 of image_0 (list) -> [
-    #                                 Position (x, y) of point_0 (tuple) -> (x0,y0),
-    #                                 Weights for non-uniform distribution for point_0 (float) -> float
-    #                             ],
-    #                             point_1 of image_0 (list) -> [
-    #                                 Position (x, y) of point_1 (tuple) -> (x1,y1),
-    #                                 Weights for non-uniform distribution for point_1 (float) -> float
-    #                             ],
-    #                             [
-    #                                 (x2,y2), float
-    #                             ],
-    #                             .
-    #                             .
-    #                             .
-    #                             [(xn,yn),float]
-    #                         ],
-    #                         image_1 (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]],  
-    #                         image_2 (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]],
-    #                           .
-    #                           .
-    #                           .
-    #                         image_n (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]]        
-    #
-    # End of the list -> ]
+     Start of the list -> [
+                             image_0 (list)-> [
+                                 point_0 of image_0 (list) -> [
+                                     Position (x, y) of point_0 (tuple) -> (x0,y0),
+                                     Weights for non-uniform distribution for point_0 (float) -> float
+                                 ],
+                                 point_1 of image_0 (list) -> [
+                                     Position (x, y) of point_1 (tuple) -> (x1,y1),
+                                     Weights for non-uniform distribution for point_1 (float) -> float
+                                 ],
+                                 [
+                                     (x2,y2), float
+                                 ],
+                                 .
+                                 .
+                                 .
+                                 [(xn,yn),float]
+                             ],
+                             image_1 (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]],  
+                             image_2 (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]],
+                               .
+                               .
+                               .
+                             image_n (list) -> [[(x0,y0),float], [(x1,y1),float], [(x2,y2),float], [(x3,y3),float] ... [(xn,yn),float]]        
+    
+     End of the list -> ]
     #----------------- END Structure of the list returned----------------#
-
+    """
 
 #------------Example how to use------------#
 
