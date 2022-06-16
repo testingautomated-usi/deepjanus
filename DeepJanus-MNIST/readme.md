@@ -57,3 +57,33 @@ To fix the problem and install a specific version, use the following command:
 ```
 $ pip install 'modulename==moduleversion' --force-reinstall
 ```
+
+# 2. Attetion Maps Feature - Getting Started #
+All the changes were made on the docker image using the same components installed in the Venv. Run Step1 to configure the enviroment.
+The only new component to be installed is the tf-keras-vis. That can be installed running the following command:
+## Step 2.1: Install   ##
+
+```
+$ pip install tf-keras-vis
+```
+
+## Usage ##
+A new python file `attention_maps.py` was addedd to the directory. Inside this file, the main important functions to be used in the DeepJanus project are:
+* `AM_get_attetion_svg_points_images_mth1`: This function will return a list containing the SVG path points located inside the square patch with more attention (sum of the attetion pixels inside the square patch). First, the function iterates all the image summing the pixels inside the square patchs and looking for the highest sum value. When it finds that area with maximum value, it will get all the SVG path points inside that area and return them in a list. 
+  * ### Inputs: ###
+    * `images`: A numpy array of the image to be processed with dimensions (x, 28, 28) where x>=1;
+    * `x_patch_size`: The X size of the patch area for the sum of the attention pixels.
+    * `y_patch_size`: The Y size of the patch area for the sum of the attention pixels.
+    * `model`: The model object to be used to predict to predict the digit's value.
+  * ### Outputs: ###
+    * `list_of_ControlPointsInsideRegion`: A list containing the positions (tuples) of the SVG path points inside the max attention square patch.
+    * `Elapsed time`: Elapsed time to run the function.
+
+* `AM_get_attetion_svg_points_images_mth2`: This function will return a list containing the SVG path points and the respective weights for the random choice of a number in a non-unfiform distribution. Differently from the previous function, the sum of the attention pixels is performed only around the positions of the SVG path points (square patch). After saving the value of the attetion maps for each SVG path point, the script will associate a weight for each point proportional to the value of the attention sum around their respective positions.
+  * ### Inputs: ###
+    * `images`: A numpy array of the image to be processed with dimensions (x, 28, 28) where x>=1
+    * `sqr_size`: The size of the square patch which the sums of the attention pixels will be performed.
+    * `model`: The model object to be used to predict to predict the digit's value.
+  * ### Outputs: ###
+    * `list_of_points_and_weights`: A list containing the positions (tuples) of the SVG path points and the respective non-uniform distribution weights.
+    * `Elapsed time`: Elapsed time to run the function.
