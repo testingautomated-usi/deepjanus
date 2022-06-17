@@ -96,7 +96,12 @@ A new python file `attention_maps.py` was added to the directory. Inside this fi
 ```python
 #------------Example how to use------------#
 
-load the MNIST dataset
+from tensorflow import keras
+from config import MODEL
+from attention_maps import AM_get_attetion_svg_points_images_mth1, \
+    AM_get_attetion_svg_points_images_mth2
+
+# load the MNIST dataset
 mnist = keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
@@ -111,4 +116,6 @@ print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
 print("Method2:\n")
 list_of_points_and_probalities, elapsed_time = AM_get_attetion_svg_points_images_mth2(images, 3, model)
 print(list_of_points_and_probalities,"\n", elapsed_time,"\n")
-```
+
+````
+
