@@ -96,7 +96,7 @@ A new python file `attention_maps.py` was added to the directory. Inside this fi
 ````python
 #------------Example how to use------------#
 
-load the MNIST dataset
+# load the MNIST dataset
 mnist = keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
