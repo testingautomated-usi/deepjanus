@@ -96,6 +96,11 @@ A new python file `attention_maps.py` was added to the directory. Inside this fi
 ````python
 #------------Example how to use------------#
 
+from tensorflow import keras
+from config import MODEL
+from attention_maps import AM_get_attetion_svg_points_images_mth1, \
+    AM_get_attetion_svg_points_images_mth2
+
 # load the MNIST dataset
 mnist = keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
