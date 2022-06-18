@@ -21,6 +21,7 @@ from tensorflow.keras.applications.imagenet_utils import preprocess_input
 import matplotlib.patches as patches
 
 import time
+import rasterization_tools
 
 def input_reshape_images(x):
     # shape numpy vectors
@@ -327,22 +328,69 @@ def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model):
 
 #------------Example how to use------------#
 
-# load the MNIST dataset
+#load the MNIST dataset
+# mnist = attention_maps.keras.datasets.mnist
+# (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+# model = attention_maps.keras.models.load_model(MODEL)
+
+# images = x_test[:2]
+
+# print("Method1:\n")
+# list_of_points_inside_square_attention_patch, elapsed_time = attention_maps.AM_get_attetion_svg_points_images_mth1(images, 3, 3, model)
+# print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
+
+# print("Method2:\n")
+# list_of_points_and_probalities, elapsed_time = attention_maps.AM_get_attetion_svg_points_images_mth2(images, 3, model)
+# print(list_of_points_and_probalities,"\n", elapsed_time,"\n")
+
+#------------Pipeline 2 ------------#
+
+# def get_svg_path(image):
+#     array = vectorization_tools.preprocess(image)
+#     # use Potrace lib to obtain a SVG path from a Bitmap
+#     # Create a bitmap from the array
+#     bmp = vectorization_tools.potrace.Bitmap(array)
+#     # Trace the bitmap to a path
+#     path = bmp.trace()
+#     return vectorization_tools.createSVGpath(path)
+
 # mnist = keras.datasets.mnist
 # (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
 # model = keras.models.load_model(MODEL)
 
-# images = x_test[:2]
-
+# n = 10
+# images = x_test[:n]
+# labels = y_test[:n]
+# print("MNIS images shape", images.shape)
 # print("Method1:\n")
-# list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(images, 3, 3, model)
-# print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
-
-# print("Method2:\n")
-# list_of_points_and_probalities, elapsed_time = AM_get_attetion_svg_points_images_mth2(images, 3, model)
-# print(list_of_points_and_probalities,"\n", elapsed_time,"\n")
-
+# for image_index in range(images.shape[0]):
+#     print("Image ", str(image_index),"\n")
+#     image = images[image_index].reshape(1,28,28)
+#     label = labels[image_index]
+#     for iteration in range(0,9):
+#         print("Iteration ", str(iteration),"\n")
+#         list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, 5, 5, model)
+#         # print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
+#         mutante_digit_path = apply_mutoperator_attention(image, get_svg_path(image[0]), 20, model)
+#         # save_svg(vectorization_tools.create_svg_xml(mutante_digit_path),"./mutants/mutant_dig=0_sqr=5_"+str(iteration))
+#         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))    
+#         # inverted_rast_nparray = 1 - rast_nparray
+#         # prediction = np.argmax(model.predict(input_reshape_images(rast_nparray)), axis=-1)
+#         prediction = model.predict_classes(input_reshape_images_reverse(rast_nparray))
+#         prediction_mnist_data = model.predict_classes(input_reshape_images(image))
+#         print("PM: ",str(prediction[0]), " PO:", str(prediction_mnist_data[0]), "Label: ", str(label))        
+#         # nparray_to_save = input_reshape_images(inverted_rast_nparray).reshape(28, 28)
+#         # plt.imsave("./mutants/Pred_mutant_sqr=5_Pred="+str(prediction[0])+"_lab="+str(labels[0])+"_"+str(iteration)+'.png', nparray_to_save, cmap='gray', format='png')
+#         if prediction!= prediction_mnist_data:
+#             f, ax = plt.subplots(ncols = 2)
+#             ax[0].imshow(rast_nparray.reshape(28, 28), cmap = "gray")
+#             ax[0].set_title("Prediction= " + str(prediction[0]))
+#             ax[1].imshow(image[0], cmap = "gray")
+#             ax[1].set_title("Prediction= " + str(prediction_mnist_data[0]))
+#             plt.tight_layout()
+#             plt.savefig("./mutants/Pred2_mutant_sqr=5_Pred="+str(prediction[0])+"_PredOrig="+str(prediction_mnist_data[0])+"_lab="+str(label)+"_"+str(iteration)+'.png')
 
 
 
