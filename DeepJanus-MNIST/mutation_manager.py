@@ -11,6 +11,40 @@ from predictor import Predictor
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
 
+def apply_displacement_to_mutant_2(list_of_points, extent):
+    displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
+    x_or_y = random.choice((0,1))
+    y_or_x = (x_or_y-1) * -1
+    list_of_mutated_coordinates_string = []
+    coordinate_matutated = [0,0]
+    for point in list_of_points:
+        coordinate_matutated[y_or_x] = point[y_or_x]
+        value = point[x_or_y]        
+        if random.uniform(0, 1) >= MUTOFPROB:
+            result = float(value) + displ
+            coordinate_matutated[x_or_y] = result
+            list_of_mutated_coordinates_string.append(str(coordinate_matutated[0])+","+str(coordinate_matutated[1]))
+        else:
+            result = float(value) - displ
+            coordinate_matutated[x_or_y] = result
+            list_of_mutated_coordinates_string.append(str(coordinate_matutated[0])+","+str(coordinate_matutated[1]))
+    return list_of_mutated_coordinates_string
+
+def apply_mutoperator_attention_2(input_img, svg_path, extent):
+    list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3,
+                                                                                                       Predictor.model)
+
+    list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)  
+    
+    path = svg_path
+    list_of_points = list_of_points_inside_square_attention_patch[0]                                                                                                
+    for original_coordinate_tuple, mutated_coordinate_tuple in zip(list_of_points, list_of_mutated_coordinates_string):
+        original_coordinate = str(original_coordinate_tuple[0]) + "," + str(original_coordinate_tuple[1])
+        # print("original coordinate", original_coordinate)
+        # print("mutated coordinate", mutated_coordinate_tuple)
+        path = path.replace(original_coordinate, mutated_coordinate_tuple)
+
+    return path
 
 def apply_displacement_to_mutant(value, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
