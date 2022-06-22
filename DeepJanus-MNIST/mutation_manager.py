@@ -32,19 +32,20 @@ def apply_displacement_to_mutant_2(list_of_points, extent):
 
 def apply_mutoperator_attention_2(input_img, svg_path, extent):
     list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3,
-                                                                                                       Predictor.model)
+                                                                                                       "Predictor.model", svg_path)
 
-    list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)  
+    list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)
+    # print("LIMCS", list_of_mutated_coordinates_string)  
     
-    path = svg_path
+    originalPath = svg_path
     list_of_points = list_of_points_inside_square_attention_patch[0]                                                                                                
     for original_coordinate_tuple, mutated_coordinate_tuple in zip(list_of_points, list_of_mutated_coordinates_string):
         original_coordinate = str(original_coordinate_tuple[0]) + "," + str(original_coordinate_tuple[1])
         # print("original coordinate", original_coordinate)
         # print("mutated coordinate", mutated_coordinate_tuple)
-        path = path.replace(original_coordinate, mutated_coordinate_tuple)
+        mutatedPath = originalPath.replace(original_coordinate, mutated_coordinate_tuple)
 
-    return path
+    return mutatedPath
 
 def apply_displacement_to_mutant(value, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
@@ -129,9 +130,9 @@ def mutate(input_img, svg_desc, operator_name, mutation_extent):
     elif operator_name == 2:
         mutant_vector = apply_mutoperator2(input_img, svg_path, mutation_extent)
     elif operator_name == 3:
-        mutant_img = input_img.reshape(-1, 28, 28)
+        mutant_img = input_img.reshape(1, 28, 28)
         mutant_img = mutant_img * 255
-        mutant_vector = apply_mutoperator_attention(mutant_img, svg_path, mutation_extent)
+        mutant_vector = apply_mutoperator_attention_2(mutant_img, svg_path, mutation_extent)
     return mutant_vector
 
 
