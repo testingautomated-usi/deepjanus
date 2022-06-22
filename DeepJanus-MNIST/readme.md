@@ -99,7 +99,8 @@ A new python file `attention_maps.py` was added to the directory. Inside this fi
 from tensorflow import keras
 from config import MODEL
 from attention_maps import AM_get_attetion_svg_points_images_mth1, \
-    AM_get_attetion_svg_points_images_mth2
+    AM_get_attetion_svg_points_images_mth2, \
+    get_svg_path
 
 # load the MNIST dataset
 mnist = keras.datasets.mnist
@@ -108,7 +109,7 @@ mnist = keras.datasets.mnist
 model = keras.models.load_model(MODEL)
 
 images = x_test[:2]
-svg_path = attention_maps.get_svg_path(images[0]) #get_svg_path input should be an image (28,28)
+svg_path = get_svg_path(images[0]) #get_svg_path input should be an image (28,28)
 
 print("Method1:\n")
 list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(images, 3, 3, svg_path)
