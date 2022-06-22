@@ -74,7 +74,7 @@ A new python file `attention_maps.py` was added to the directory. Inside this fi
     * `images`: A numpy array of the image to be processed with dimensions (x, 28, 28) where x>=1;
     * `x_patch_size`: The X size of the patch area for the sum of the attention pixels.
     * `y_patch_size`: The Y size of the patch area for the sum of the attention pixels.
-    * `model`: The model object to be used to predict to predict the digit's value.
+    * `svg_path`: A string with the digit's SVG path description. Ex: "M .... C .... Z".
   * ### Outputs: ###
     * `list_of_ControlPointsInsideRegion`: A list containing the positions (tuples) of the SVG path points inside the max attention square patch.
     * `Elapsed time`: Elapsed time to run the function.
@@ -108,9 +108,10 @@ mnist = keras.datasets.mnist
 model = keras.models.load_model(MODEL)
 
 images = x_test[:2]
+svg_path = attention_maps.get_svg_path(images[0]) #get_svg_path input should be an image (28,28)
 
 print("Method1:\n")
-list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(images, 3, 3, model)
+list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(images, 3, 3, svg_path)
 print(list_of_points_inside_square_attention_patch,"\n", elapsed_time,"\n")
 
 print("Method2:\n")

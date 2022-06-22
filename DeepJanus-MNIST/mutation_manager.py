@@ -31,8 +31,7 @@ def apply_displacement_to_mutant_2(list_of_points, extent):
     return list_of_mutated_coordinates_string
 
 def apply_mutoperator_attention_2(input_img, svg_path, extent):
-    list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3,
-                                                                                                       "Predictor.model", svg_path)
+    list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)
 
     list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)
     # print("LIMCS", list_of_mutated_coordinates_string)  

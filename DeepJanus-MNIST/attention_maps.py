@@ -194,7 +194,7 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size, i):
     return final_list, (end_time - start_time)
 
 
-def get_XAI_image(images, model):# images should have the shape: (x, 28, 28) where x>=1
+def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
 
     images_reshaped = input_reshape_images(images)
 
@@ -244,17 +244,17 @@ def AM_get_attetion_svg_points_image(image, x_patch_size, y_patch_size, model): 
 
     return list_of_ControlPointsInsideRegion, elapsed_time
 
-def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, model, svg_path):
+def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, svg_path):
     """
     AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
 
     :param images: images should have the shape: (x, 28, 28) where x>=1
     :param x_patch_size: X size of the square region
     :param y_patch_size: Y size of the square region
-    :param model: The model object that will predict the value of the digit in the image 
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
-    xai = get_XAI_image(images, model)
+    xai = get_XAI_image(images)
 
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
