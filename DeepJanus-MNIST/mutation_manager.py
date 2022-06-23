@@ -5,7 +5,8 @@ from random import randint, uniform
 from config import MUTLOWERBOUND, MUTUPPERBOUND, MUTOFPROB
 
 from attention_maps import AM_get_attetion_svg_points_images_mth1, \
-    AM_get_attetion_svg_points_images_mth2
+    AM_get_attetion_svg_points_images_mth2, \
+    AM_get_attetion_svg_points_images_mth5
 
 from predictor import Predictor
 
@@ -31,18 +32,40 @@ def apply_displacement_to_mutant_2(list_of_points, extent):
     return list_of_mutated_coordinates_string
 
 def apply_mutoperator_attention_2(input_img, svg_path, extent):
-    list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)
 
-    list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)
-    # print("LIMCS", list_of_mutated_coordinates_string)  
-    
-    originalPath = svg_path
-    list_of_points = list_of_points_inside_square_attention_patch[0]                                                                                                
-    for original_coordinate_tuple, mutated_coordinate_tuple in zip(list_of_points, list_of_mutated_coordinates_string):
-        original_coordinate = str(original_coordinate_tuple[0]) + "," + str(original_coordinate_tuple[1])
-        # print("original coordinate", original_coordinate)
-        # print("mutated coordinate", mutated_coordinate_tuple)
-        mutatedPath = originalPath.replace(original_coordinate, mutated_coordinate_tuple)
+    attention_mth = 1
+
+    if attention_mth != 2:
+        if attention_mth == 1:
+            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)            
+        elif attention_mth == 5:
+            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 1, svg_path)
+        else:
+            print("Choose a valid attention_mth option in mutation_manager.py")
+            
+        list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)
+            
+        # print("LIMCS", list_of_mutated_coordinates_string)  
+        
+        originalPath = svg_path
+        list_of_points = list_of_points_inside_square_attention_patch[0]                                                                                                
+        for original_coordinate_tuple, mutated_coordinate_tuple in zip(list_of_points, list_of_mutated_coordinates_string):
+            original_coordinate = str(original_coordinate_tuple[0]) + "," + str(original_coordinate_tuple[1])
+            # print("original coordinate", original_coordinate)
+            # print("mutated coordinate", mutated_coordinate_tuple)
+            mutatedPath = originalPath.replace(original_coordinate, mutated_coordinate_tuple)
+
+    elif attention_mth == 2:
+        original_point, elapsed_time = AM_get_attetion_svg_points_images_mth2(input_img, 3, svg_path)
+        original_coordinate = random.choice(original_point)
+        # print(original_point)
+        # print(original_coordinate)
+
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+
+        mutatedPath = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+    else:
+        print("Choose a valid attention_mth option in mutation_manager.py")
 
     return mutatedPath
 

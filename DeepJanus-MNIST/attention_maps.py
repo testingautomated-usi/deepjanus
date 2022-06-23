@@ -17,6 +17,8 @@ from config import MODEL, MODEL2, num_classes
 from tf_keras_vis.utils.model_modifiers import ReplaceToLinear
 from tf_keras_vis.utils.scores import CategoricalScore
 from tf_keras_vis.gradcam_plus_plus import GradcamPlusPlus
+from tf_keras_vis.scorecam import Scorecam
+from tf_keras_vis.gradcam import Gradcam
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
 
 import matplotlib.patches as patches
@@ -33,15 +35,33 @@ from predictor import Predictor
 
 import potrace
 
+from operator import itemgetter
+
 score = CategoricalScore(0)
 replace2linear = ReplaceToLinear()
 
-# model = keras.models.load_model(MODEL)    
+# Attention_Technique = "Faster-ScoreCAM" #"Gradcam++"
+Attention_Technique = "Gradcam++"
+# Attention_Technique = "Gradcam"
 
-# Create GradCAM++ object
-gradcam = GradcamPlusPlus(Predictor.model,
+if Attention_Technique == "Faster-ScoreCAM":
+
+    # Create ScoreCAM object
+    scorecam = Scorecam(Predictor.model, model_modifier=replace2linear)
+
+elif Attention_Technique == "Gradcam++":
+
+    # Create GradCAM++ object
+    gradcam = GradcamPlusPlus(Predictor.model,
                         model_modifier=replace2linear,
                         clone=True)
+
+# elif Attention_Technique == "Gradcam":
+
+#     # Create Gradcam object
+#     gradcam = Gradcam(Predictor.model,
+#                     model_modifier=replace2linear,
+#                     clone=True)
 
 def input_reshape_images(x):
     # shape numpy vectors
@@ -128,7 +148,7 @@ def get_attetion_region_mth2(xai_image, orig_image, sqr_size):
     end_time = time.time()
     return x_final_pos, y_final_pos, (end_time - start_time)
 
-def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size, i):
+def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
     start_time = time.time()
     x_dim = xai_image.shape[0]
     y_dim = xai_image.shape[1]
@@ -193,6 +213,101 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size, i):
 
     return final_list, (end_time - start_time)
 
+def get_attetion_region_mth4(xai_image, svg_path_list, sqr_size):
+
+    start_time = time.time()
+    x_dim = xai_image.shape[0]
+    y_dim = xai_image.shape[1]
+
+    if sqr_size == 3:
+        y_border_up = -1
+        y_border_bottom = 1
+        x_border_right = 1
+        x_border_left = -1
+    elif sqr_size == 5:
+        y_border_up = -2
+        y_border_bottom = 2
+        x_border_right = 2
+        x_border_left = -2
+    else:
+        print("Choose a valid value for square_size (sqr_size): 3 or 5")
+        return 0
+    
+    max_sum_xai = 0    
+    pos_max = svg_path_list[0]
+    for pos in svg_path_list:
+        x_sqr_pos = int(pos[0])
+        y_sqr_pos = int(pos[1])
+        sum_xai = 0
+        for y_in_sqr in range(y_border_up, y_border_bottom + 1):
+            y_pixel_pos = y_sqr_pos + y_in_sqr
+            if y_pixel_pos >= 0 and y_pixel_pos <= y_dim - 1:
+                for x_in_sqr in range(x_border_left, x_border_right + 1):                    
+                    x_pixel_pos = x_sqr_pos + x_in_sqr
+                    if x_pixel_pos >= 0 and x_pixel_pos <= x_dim - 1:                       
+                        sum_xai += xai_image[y_pixel_pos][x_pixel_pos]
+        if sum_xai > max_sum_xai:
+            max_sum_xai = sum_xai
+            pos_max = pos
+    
+    # print("MAXIMUM SUM_XAI =", sum_xai)
+    end_time = time.time()
+    # print("SUM XAI TEST:",sum_test)
+
+    #Render XAI Images
+    # f, ax = plt.subplots()
+    # heatmap = np.uint8(cm.jet(xai_image)[..., :3] * 255)
+    # ax.set_title("Time: " + str((end_time - start_time)))
+    # ax.imshow(heatmap, cmap='jet')
+    # ax.scatter(*zip(*svg_path_list),s=80)
+
+    # for z, sum_value in enumerate(svg_path_list):
+    #     ax.annotate("("+str(svg_path_list[z][0])+","+str(svg_path_list[z][1])+")", (svg_path_list[z][0], svg_path_list[z][1]))
+    # plt.tight_layout()
+    # plt.savefig("./xai/"+str(time.time())+"mth3_sqr=3_opt1.png")
+
+    # plt.cla()
+
+    return pos_max, (end_time - start_time)
+
+def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
+
+    start_time = time.time()
+
+    x_dim = xai_image.shape[0]
+    y_dim = xai_image.shape[1]
+    
+    list_pos_and_values =[]
+    for pos in svg_path_list:
+        x_pixel_pos = int(pos[0])
+        y_pixel_pos = int(pos[1])
+        if x_pixel_pos >= 0 and x_pixel_pos <= x_dim - 1:
+            if y_pixel_pos >= 0 and y_pixel_pos <= y_dim - 1:
+                list_pos_and_values.append([pos, xai_image[y_pixel_pos][x_pixel_pos]])
+    get_1 = itemgetter(1)
+    list_pos_and_values_sorted = sorted(list_pos_and_values, key=get_1, reverse=True)
+    list_to_return = list_pos_and_values_sorted[0:number_of_points]
+    new_list = [item[0] for item in list_to_return]
+    # print("MAXIMUM SUM_XAI =", sum_xai)
+    end_time = time.time()
+    # print("SUM XAI TEST:",sum_test)
+
+    #Render XAI Images
+    # f, ax = plt.subplots()
+    # heatmap = np.uint8(cm.jet(xai_image) * 255)
+    # ax.set_title("Time: " + str((end_time - start_time)))
+    # ax.imshow(heatmap, cmap='jet')
+    # ax.scatter(*zip(*svg_path_list),s=80)
+
+    # for z, sum_value in enumerate(xai_list):
+    #     ax.annotate(round((sum_value/sum_xai_list)*100,2), (svg_path_list[z][0], svg_path_list[z][1]))
+    # plt.tight_layout()
+    # plt.savefig("./xai/gradcam++/"+str(i)+"mth3_sqr=3_opt1.png")
+
+    # plt.cla()
+
+    return [new_list], (end_time - start_time)
+
 
 def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
 
@@ -202,10 +317,26 @@ def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
 
     # prediction = model.predict_classes(input_reshape(images))
 
-    # Generate heatmap with GradCAM++
-    cam = gradcam(score,
+    if Attention_Technique == "Faster-ScoreCAM":
+
+        # Generate heatmap with Faster-ScoreCAM
+        cam = scorecam(score,
                 X,
-                penultimate_layer=-1)
+                penultimate_layer=-1,
+                max_N=10)
+    
+    elif Attention_Technique == "Gradcam++":    
+
+        # Generate heatmap with GradCAM++
+        cam = gradcam(score,
+                    X,
+                    penultimate_layer=-1)
+
+    # elif Attention_Technique == "Gradcam":
+    #     # Generate heatmap with GradCAM
+    #     cam = gradcam(score,
+    #                 X,
+    #                 penultimate_layer=-1)
 
     return cam
 
@@ -291,7 +422,7 @@ def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, s
      End of the list -> ]
     #----------------- END Structure of the list returned----------------#
     """
-def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model):
+def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
     """
     AM_get_attetion_svg_points_images_mth2 Calculate the attetion score around each SVG path point and return a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points
 
@@ -343,6 +474,57 @@ def AM_get_attetion_svg_points_images_mth2(images, sqr_size, model):
      End of the list -> ]
     #----------------- END Structure of the list returned----------------#
     """
+def AM_get_attetion_svg_points_images_mth2(images, sqr_size, svg_path):
+    """
+    AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1 
+    :param sqr_size: X and Y size of the square region
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: The point with more score attention around it. Tuple - One single point. Ex: (x,y)
+    """ 
+    xai = get_XAI_image(images)
+
+    # x, y = get_attetion_region(cam, images)
+    # list_of_ControlPointsInsideRegion = []
+    total_elapsed_time = 0
+    for i in range(images.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+
+        position, elapsed_time = get_attetion_region_mth4(xai[i], controlPoints, sqr_size) #Getting coordinates of the highest attetion region (patch) reference point
+
+        # list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
+       
+    return position, total_elapsed_time
+
+def AM_get_attetion_svg_points_images_mth5(images, number_of_points, svg_path):
+    """
+    AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param number_of_points: Number of points (n) to return
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: A list of n points (number_of_points) with more score attention around it. List of tuples Ex: (x,y)
+    """ 
+    xai = get_XAI_image(images)
+
+    # x, y = get_attetion_region(cam, images)
+    # list_of_ControlPointsInsideRegion = []
+    total_elapsed_time = 0
+    for i in range(images.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+
+        # position, elapsed_time = get_attetion_region_mth4(xai[i], controlPoints, sqr_size) #Getting coordinates of the highest attetion region (patch) reference point
+        position, elapsed_time = get_attetion_region_mth5(xai[i], controlPoints, number_of_points) #Getting coordinates of the highest attetion region (patch) reference point
+
+        # list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
+       
+    return position, total_elapsed_time
+
 def apply_displacement_to_mutant_2(list_of_points, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
     x_or_y = random.choice((0,1))
