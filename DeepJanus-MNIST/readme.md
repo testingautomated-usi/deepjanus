@@ -1,64 +1,37 @@
-# Test Input Generator for MNIST - Getting Started #
+# Attetion Maps Feature - Usage #
 
-## General Information ##
-This folder contains the application of the DeepJanus approach to the handwritten digit classification problem.
-The following instructions allow to rapidly run DeepJanus, without configuring your environment from scratch.
+## Usage - Latest changes - 24th June ##
 
-> NOTE: If you want to configure your machine to run DeepJanus-MNIST, please read our [__detailed installation guide__](FULL_INSTALL.md)
+### 1 - Options to change the attention tf-keras-vis technique to retrieve the heatmaps. ###
 
-## Step 1: Configure the environment  ##
+Go to `attention_maps.py` and change the variable `Attention_Technique` (line 44).
 
-Pull our pre-configured Docker image for DeepJanus-MNIST:
+Choose one of the 2 options below:
 
-``` 
-docker pull p1ndsvin/ubuntu:dj
+```python
+Attention_Technique = "Faster-ScoreCAM"
+Attention_Technique = "Gradcam++"
 ```
+OBS: Solving some bugs with the gradcam technique.
 
-Run the image by typing in the terminal the following commands:
+### 2 - Change the method to find the SVG_path points with more attention score. ###
 
+Go to `mutation_manager.py` and change the variable `attention_mth` (line 36).
+
+Choose one of the 2 options below:
+
+* `Method 1`: Moving window (3x3) to find the max attention area in the heatmap and returns all the points inside the window. 
+
+```python
+attention_mth = 1
 ```
-docker run -it --rm p1ndsvin/ubuntu:dj
-cd venvs
-. .djvenv/bin/activate
-cd ..
+* `Method 5`: For each SVG_path point, calculate the attention score of the corresponding pixel and returns the n (4) points with more attention scores. (Based on Andreas suggestion).
+
+```python
+attention_mth = 5
 ```
+## Attetion Maps Feature - Installation ##
 
-## Step 2: Run DeepJanus ##
-Use the following commands to start a rapid run of DeepJanus-MNIST:
-
-```
-cd deepjanus/DeepJanus-MNIST
-python main.py
-```
-
-## Usage ##
-
-### Input ###
-
-* A trained model in h5 format. The default one is in the folder `models`;
-* A list of seeds used for the input generation. The default list is in the folder `original_dataset`;
-* `config.py` containing the configuration of the tool selected by the user.
-
-### Output ###
-When the run is finished, the tool produces a folder named `run_x` (where `x` is the timestamp of the run) located in the folder `runs`. The output folder contains
-the following outputs:
-* `config.json` reporting the configuration of the tool;
-* `stats.csv` containing the final report of the run;
-* the folder `archive` containing the generated inputs (both in npy array and image format).
-
-## Troubleshooting ##
-
-* If tensorflow cannot be installed successfully, try to upgrade the pip version. Tensorflow cannot be installed by old versions of pip. We recommend the pip version 20.1.1.
-* If the import of cairo, potrace or other modules fails, check that the correct version is installed. The correct version is reported in the file requirements.txt. The version of a module can be checked with the following command:
-```
-$ pip show modulename | grep Version
-```
-To fix the problem and install a specific version, use the following command:
-```
-$ pip install 'modulename==moduleversion' --force-reinstall
-```
-
-# 2. Attetion Maps Feature - Getting Started #
 All the changes were made on the docker image using the same components installed in the Venv. Run Step1 to configure the enviroment.
 The only new component to be installed is the tf-keras-vis. That can be installed running the following command:
 ## Step 2.1: Install   ##
@@ -67,7 +40,9 @@ The only new component to be installed is the tf-keras-vis. That can be installe
 $ pip install tf-keras-vis
 ```
 
-## Usage ##
+## OUTDATED Functions Below - Please Ignore. ##
+
+
 A new python file `attention_maps.py` was added to the directory. Inside this file, the main important functions to be used in the DeepJanus project are:
 * `AM_get_attetion_svg_points_images_mth1`: This function will return a list containing the SVG path points located inside the square patch with more attention (sum of the attetion pixels inside the square patch). First, the function go through all the image summing the pixels inside the square patches and looking for the highest sum value. When it finds that area with maximum value, it will get all the SVG path points inside that area and return them in a list. 
   * ### Inputs: ###
