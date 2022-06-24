@@ -39,7 +39,7 @@ def apply_mutoperator_attention_2(input_img, svg_path, extent):
         if attention_mth == 1:
             list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)            
         elif attention_mth == 5:
-            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 4, svg_path)
+            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
         else:
             print("Choose a valid attention_mth option in mutation_manager.py")
             

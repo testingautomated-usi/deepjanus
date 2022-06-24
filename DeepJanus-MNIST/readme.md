@@ -25,10 +25,16 @@ Choose one of the 2 options below:
 ```python
 attention_mth = 1
 ```
-* `Method 5`: For each SVG_path point, calculate the attention score of the corresponding pixel and returns the n (4) points with more attention scores. (Based on Andreas suggestion).
+* `Method 5`: For each SVG_path point, calculate the attention score of the corresponding pixel and returns the n (2) points with more attention scores. (Based on Andreas suggestion).
 
 ```python
 attention_mth = 5
+```
+
+To change the number of points to return, go to mutation_manager.py line 42 and change the second argument of the function:
+
+```python
+list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
 ```
 ## Attetion Maps Feature - Installation ##
 
