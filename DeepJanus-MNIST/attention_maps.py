@@ -562,7 +562,7 @@ def apply_displacement_to_mutant_2(list_of_points, extent):
 
 def apply_mutoperator_attention_2(input_img, svg_path, extent, model):
     list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3,
-                                                                                                       model, svg_path)
+                                                                                                     svg_path)
 
     list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)  
     
@@ -630,10 +630,11 @@ def input_reshape_images_reverse(x):
 
 
 
-#------------Method to generate mutant digits based only on the attention maps strategy ------------#
+#------------Mutant Unit Tests - Method to generate mutant digits based only on the attention maps strategy ------------#
 # Instructions: 
-#   1 - Create the folder "./xai/"
-#   2 - Run "python attention_maps.py"
+#  1 - Uncomment the code
+#  2 - Create the results folder: "./mutant/"
+#  3 - Run "python attention_maps.py"
 
 # mnist = keras.datasets.mnist
 # (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -653,7 +654,7 @@ def input_reshape_images_reverse(x):
 #     label = labels[image_index]
 #     for iteration in range(0,19):
 #         print("Iteration ", str(iteration))
-#         list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, square_size, square_size, model, get_svg_path(image[0]))
+#         list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, square_size, square_size, get_svg_path(image[0]))
 #         mutante_digit_path = apply_mutoperator_attention_2(image, get_svg_path(image[0]), extent, model)
 #         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))    
 #         prediction = model.predict_classes(input_reshape_images_reverse(rast_nparray))

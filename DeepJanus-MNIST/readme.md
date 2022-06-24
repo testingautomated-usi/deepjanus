@@ -36,6 +36,14 @@ To change the number of points to return, go to mutation_manager.py line 42 and 
 ```python
 list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
 ```
+### Mutation unit tests ###
+
+To see how the mutation digits are looking like, you can run the commented script at the end of the `attention_maps.py` file (lines 638 to 670).
+Instructions:
+ 1 - Uncomment the code
+ 2 - Create the results folder: "./mutant/"
+ 3 - Run `python attention_maps.py`
+
 ## Attetion Maps Feature - Installation ##
 
 All the changes were made on the docker image using the same components installed in the Venv. Run Step1 to configure the enviroment.
