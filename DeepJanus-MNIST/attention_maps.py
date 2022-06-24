@@ -84,7 +84,6 @@ def input_reshape_image(x):
     return x_reshape
 
 def get_attetion_region(xai_image, orig_image, x_sqr_size, y_sqr_size):
-    start_time = time.time()
     x_dim = xai_image.shape[0]
     y_dim = xai_image.shape[1]
 
@@ -109,8 +108,7 @@ def get_attetion_region(xai_image, orig_image, x_sqr_size, y_sqr_size):
                 x_final_pos = x_sqr_pos
                 y_final_pos = y_sqr_pos
 
-    end_time = time.time()
-    return x_final_pos, y_final_pos, (end_time - start_time)
+    return x_final_pos, y_final_pos
 
 def get_attetion_region_mth2(xai_image, orig_image, sqr_size):
     start_time = time.time()
@@ -149,7 +147,7 @@ def get_attetion_region_mth2(xai_image, orig_image, sqr_size):
     return x_final_pos, y_final_pos, (end_time - start_time)
 
 def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
-    start_time = time.time()
+
     x_dim = xai_image.shape[0]
     y_dim = xai_image.shape[1]
 
@@ -194,7 +192,7 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
         # sum_test += (sum_value/sum_xai_list) #Should be equal to 1
 
 
-    end_time = time.time()
+
     # print("SUM XAI TEST:",sum_test)
 
     #Render XAI Images
@@ -211,7 +209,7 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
 
     # plt.cla()
 
-    return final_list, (end_time - start_time)
+    return final_list
 
 def get_attetion_region_mth4(xai_image, svg_path_list, sqr_size):
 
@@ -272,8 +270,6 @@ def get_attetion_region_mth4(xai_image, svg_path_list, sqr_size):
 
 def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
 
-    start_time = time.time()
-
     x_dim = xai_image.shape[0]
     y_dim = xai_image.shape[1]
     
@@ -289,7 +285,6 @@ def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
     list_to_return = list_pos_and_values_sorted[0:number_of_points]
     new_list = [item[0] for item in list_to_return]
     # print("MAXIMUM SUM_XAI =", sum_xai)
-    end_time = time.time()
     # print("SUM XAI TEST:",sum_test)
 
     #Render XAI Images
@@ -306,11 +301,11 @@ def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
 
     # plt.cla()
 
-    return [new_list], (end_time - start_time)
+    return [new_list]
 
 
 def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
-
+    # start_time = time.time()
     images_reshaped = input_reshape_images(images)
 
     X = preprocess_input(images_reshaped, mode = "tf")
@@ -337,7 +332,8 @@ def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
     #     cam = gradcam(score,
     #                 X,
     #                 penultimate_layer=-1)
-
+    # end_time = time.time()
+    # print("XAI Time: ", (end_time-start_time))
     return cam
 
 def getControlPointsInsideAttRegion(x,y,x_dim,y_dim, controlPoints):
@@ -385,21 +381,30 @@ def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, s
     :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
+    # start_time1 = time.time()
     xai = get_XAI_image(images)
-
+    # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
-    total_elapsed_time = 0
     for i in range(images.shape[0]):
         pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
         ControlPoints = pattern.findall(svg_path)
         controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
 
-        x, y, elapsed_time = get_attetion_region(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+        x, y = get_attetion_region(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
         ControlPointsInsideRegion = getControlPointsInsideAttRegion(x,y,x_patch_size,y_patch_size, controlPoints) #Getting all the points inside the highest attetion patch
         list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
-       
-    return list_of_ControlPointsInsideRegion, total_elapsed_time
+
+    # end_time = time.time()
+
+    # xai_time = (start_time - start_time1)
+    # find_time = (end_time - start_time)
+    # total_time = (end_time - start_time1)
+    # print("Retrieve heatmap time: ", xai_time)            
+    # print("Find attention points time mth1: ", find_time) 
+    # print("Total time mth1: ", total_time) 
+    # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
+    return list_of_ControlPointsInsideRegion, "(end_time - start_time1)"
     """
     #-----------------Structure of the list returned----------------#
      Start of the list -> [
@@ -432,18 +437,19 @@ def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
     :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     xai = get_XAI_image(images, model)
-
+    start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_points_and_weights = []
-    total_elapsed_time = 0
+
     for i in range(images.shape[0]):
         ControlPoints = vectorization_tools.getImageControlPoints(images[i])
         print("image",i )
-        pos_and_prob_list, elapsed_time = get_attetion_region_mth3(xai[i], ControlPoints, sqr_size, i)
+        pos_and_prob_list = get_attetion_region_mth3(xai[i], ControlPoints, sqr_size, i)
         list_of_points_and_weights.append(pos_and_prob_list)
-        total_elapsed_time += elapsed_time
 
-    return list_of_points_and_weights, total_elapsed_time
+    end_time = time.time()            
+    print("Find attention points time mth3: ", (end_time - start_time))
+    return list_of_points_and_weights, (end_time - start_time)
     """
     #-----------------Structure of the list returned----------------#
      Start of the list -> [
@@ -508,8 +514,9 @@ def AM_get_attetion_svg_points_images_mth5(images, number_of_points, svg_path):
     :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
     :return: A list of n points (number_of_points) with more score attention around it. List of tuples Ex: (x,y)
     """ 
+    # start_time1= time.time() 
     xai = get_XAI_image(images)
-
+    # start_time = time.time() 
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsInsideRegion = []
     total_elapsed_time = 0
@@ -519,11 +526,19 @@ def AM_get_attetion_svg_points_images_mth5(images, number_of_points, svg_path):
         controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
 
         # position, elapsed_time = get_attetion_region_mth4(xai[i], controlPoints, sqr_size) #Getting coordinates of the highest attetion region (patch) reference point
-        position, elapsed_time = get_attetion_region_mth5(xai[i], controlPoints, number_of_points) #Getting coordinates of the highest attetion region (patch) reference point
+        position = get_attetion_region_mth5(xai[i], controlPoints, number_of_points) #Getting coordinates of the highest attetion region (patch) reference point
 
         # list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
-       
-    return position, total_elapsed_time
+
+    # end_time = time.time()
+    # xai_time = (start_time - start_time1)
+    # find_time = (end_time - start_time)
+    # total_time = (end_time - start_time1)
+    # print("Retrieve heatmap time: ", xai_time)            
+    # print("Find attention points time mth5: ", find_time) 
+    # print("Total time mth5: ", total_time) 
+    # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
+    return position, "(end_time - start_time)"
 
 def apply_displacement_to_mutant_2(list_of_points, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent

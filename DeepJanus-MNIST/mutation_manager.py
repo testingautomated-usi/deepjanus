@@ -32,14 +32,14 @@ def apply_displacement_to_mutant_2(list_of_points, extent):
     return list_of_mutated_coordinates_string
 
 def apply_mutoperator_attention_2(input_img, svg_path, extent):
-
-    attention_mth = 1
-
+    # start_time = time.time()
+    attention_mth = 5
+    
     if attention_mth != 2:
         if attention_mth == 1:
             list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)            
         elif attention_mth == 5:
-            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 1, svg_path)
+            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 4, svg_path)
         else:
             print("Choose a valid attention_mth option in mutation_manager.py")
             
@@ -67,6 +67,8 @@ def apply_mutoperator_attention_2(input_img, svg_path, extent):
     else:
         print("Choose a valid attention_mth option in mutation_manager.py")
 
+    # end_time = time.time()
+    # print("apply_mutoperator_attention_2 mth5 time: ", (end_time - start_time))
     return mutatedPath
 
 def apply_displacement_to_mutant(value, extent):
