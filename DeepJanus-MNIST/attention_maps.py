@@ -36,6 +36,7 @@ from predictor import Predictor
 import potrace
 
 from operator import itemgetter
+import copy
 
 score = CategoricalScore(0)
 replace2linear = ReplaceToLinear()
@@ -82,6 +83,146 @@ def input_reshape_image(x):
     x_reshape = x_reshape.astype('float32')
     x_reshape /= 255.0
     return x_reshape
+
+def get_attetion_region_and_darken_pixel_mth1(xai_image, orig_image, x_sqr_size, y_sqr_size):
+    x_dim = xai_image.shape[0]
+    y_dim = xai_image.shape[1]
+
+    # print("x_dim ",x_dim)
+    # print("y_dim ",y_dim)
+
+    greater_value_sum_xai = 0
+    x_final_pos = 0
+    y_final_pos = 0
+
+    for y_sqr_pos in range(y_dim - y_sqr_size):
+        for x_sqr_pos in range(x_dim - x_sqr_size):
+            sum_xai = 0
+            for y_in_sqr in range(y_sqr_size):
+                y_pixel_pos = y_sqr_pos + y_in_sqr
+                for x_in_sqr in range(x_sqr_size):                    
+                    x_pixel_pos = x_sqr_pos + x_in_sqr
+                    if orig_image[y_pixel_pos][x_pixel_pos] > 0:
+                        sum_xai += xai_image[y_pixel_pos][x_pixel_pos]
+            if sum_xai > greater_value_sum_xai:
+                greater_value_sum_xai = sum_xai
+                x_final_pos = x_sqr_pos
+                y_final_pos = y_sqr_pos
+
+    return x_final_pos, y_final_pos
+
+
+def AM_darken_attention_pixels_mth1(images, x_patch_size, y_patch_size, svg_path):
+    """
+    AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
+    # start_time1 = time.time()
+    xai = get_XAI_image(images)
+    # start_time = time.time()
+    # x, y = get_attetion_region(cam, images)
+    list_of_ControlPointsInsideRegion = []
+    for i in range(images.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+
+        # x, y = get_attetion_region(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+        x, y = get_attetion_region_and_darken_pixel_mth1(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+        copy_orig_image = copy.deepcopy(images[i])
+        for x_ite in range(x_patch_size):
+            for y_ite in range(y_patch_size):
+                copy_orig_image[y + y_ite][x + x_ite]=0
+        # ControlPointsInsideRegion = getControlPointsInsideAttRegion(x,y,x_patch_size,y_patch_size, controlPoints) #Getting all the points inside the highest attetion patch
+        # list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
+
+    # end_time = time.time()
+
+    # xai_time = (start_time - start_time1)
+    # find_time = (end_time - start_time)
+    # total_time = (end_time - start_time1)
+    # print("Retrieve heatmap time: ", xai_time)            
+    # print("Find attention points time mth1: ", find_time) 
+    # print("Total time mth1: ", total_time) 
+    # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
+    return "list_of_ControlPointsInsideRegion", "(end_time - start_time1)", copy_orig_image
+
+def get_attetion_region_and_darken_pixel_mth2(xai_image, orig_image, x_sqr_size, y_sqr_size, number_of_regions):
+    x_dim = xai_image.shape[0]
+    y_dim = xai_image.shape[1]
+
+    # print("x_dim ",x_dim)
+    # print("y_dim ",y_dim)
+
+    greater_value_sum_xai = 0
+    x_final_pos = 0
+    y_final_pos = 0
+    list_pos_and_values = []
+    for y_sqr_pos in range(y_dim - y_sqr_size):
+        for x_sqr_pos in range(x_dim - x_sqr_size):
+            sum_xai = 0
+            for y_in_sqr in range(y_sqr_size):
+                y_pixel_pos = y_sqr_pos + y_in_sqr
+                for x_in_sqr in range(x_sqr_size):                    
+                    x_pixel_pos = x_sqr_pos + x_in_sqr
+                    if orig_image[y_pixel_pos][x_pixel_pos] > 0:
+                        sum_xai += xai_image[y_pixel_pos][x_pixel_pos]
+            list_pos_and_values.append([(x_sqr_pos, y_sqr_pos), xai_image[y_pixel_pos][x_pixel_pos]])
+
+    get_1 = itemgetter(1)
+    list_pos_and_values_sorted = sorted(list_pos_and_values, key=get_1, reverse=True)
+    list_pos_and_values_sorted_filtered = list_pos_and_values_sorted[0:number_of_regions]
+    list_to_return = [item[0] for item in list_pos_and_values_sorted_filtered]     
+
+    return list_to_return
+
+
+def AM_darken_attention_pixels_mth2(images, x_patch_size, y_patch_size, svg_path, number_of_regions):
+    """
+    AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
+    # start_time1 = time.time()
+    xai = get_XAI_image(images)
+    # start_time = time.time()
+    # x, y = get_attetion_region(cam, images)
+    list_of_ControlPointsInsideRegion = []
+    for i in range(images.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+
+        # x, y = get_attetion_region(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+        list_of_regions = get_attetion_region_and_darken_pixel_mth2(xai[i], images[i], x_patch_size, y_patch_size, number_of_regions) #Getting coordinates of the highest attetion region (patch) reference point
+        copy_orig_image = copy.deepcopy(images[i])
+        for pos in list_of_regions:
+            for x_ite in range(x_patch_size):
+                for y_ite in range(y_patch_size):
+                    copy_orig_image[pos[1] + y_ite][pos[0] + x_ite] = 0
+        # ControlPointsInsideRegion = getControlPointsInsideAttRegion(x,y,x_patch_size,y_patch_size, controlPoints) #Getting all the points inside the highest attetion patch
+        # list_of_ControlPointsInsideRegion.append(ControlPointsInsideRegion)
+
+    # end_time = time.time()
+
+    # xai_time = (start_time - start_time1)
+    # find_time = (end_time - start_time)
+    # total_time = (end_time - start_time1)
+    # print("Retrieve heatmap time: ", xai_time)            
+    # print("Find attention points time mth1: ", find_time) 
+    # print("Total time mth1: ", total_time) 
+    # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
+    return "list_of_ControlPointsInsideRegion", "(end_time - start_time1)", copy_orig_image, list_of_regions, xai
+
 
 def get_attetion_region(xai_image, orig_image, x_sqr_size, y_sqr_size):
     x_dim = xai_image.shape[0]
@@ -641,34 +782,44 @@ def input_reshape_images_reverse(x):
 
 # model = keras.models.load_model(MODEL)
 
-# n = 100
+# n = 1000
 # images = x_test[:n]
 # labels = y_test[:n]
 # extent =10
-# square_size = 3
+# square_size = 1
 # print("MNIST images shape", images.shape)
 # print("Method1:\n")
 # for image_index in range(images.shape[0]):
 #     print("Image ", str(image_index))
 #     image = images[image_index].reshape(1,28,28)
 #     label = labels[image_index]
-#     for iteration in range(0,19):
+#     for iteration in range(0,1):
 #         print("Iteration ", str(iteration))
-#         list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, square_size, square_size, get_svg_path(image[0]))
-#         mutante_digit_path = apply_mutoperator_attention_2(image, get_svg_path(image[0]), extent, model)
-#         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))    
-#         prediction = model.predict_classes(input_reshape_images_reverse(rast_nparray))
+#         # list_of_points_inside_square_attention_patch, elapsed_time, rast_nparray = AM_darken_attention_pixels_mth1(image, square_size, square_size, get_svg_path(image[0]))
+#         list_of_points_inside_square_attention_patch, elapsed_time, rast_nparray, list_of_regions, xai_image = AM_darken_attention_pixels_mth2(image, square_size, square_size, get_svg_path(image[0]), 6)
+#         prediction = model.predict_classes(input_reshape_images(rast_nparray.reshape(1,28,28)))
+#         # list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, square_size, square_size, get_svg_path(image[0]))
+#         # mutante_digit_path = apply_mutoperator_attention_2(image, get_svg_path(image[0]), extent, model)
+#         # rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))    
+#         # prediction = model.predict_classes(input_reshape_images_reverse(rast_nparray))
 #         prediction_mnist_data = model.predict_classes(input_reshape_images(image))
 #         print("PM: ",str(prediction[0]), " PO:", str(prediction_mnist_data[0]), "Label: ", str(label))        
 #         if prediction!= prediction_mnist_data:
-#             dist = get_distance(input_reshape_images_reverse(rast_nparray), image)
-#             f, ax = plt.subplots(ncols = 2)
-#             ax[0].imshow(rast_nparray.reshape(28, 28), cmap = "gray")
-#             ax[0].set_title("Prediction= " + str(prediction[0]) + "/Dist =" + str(dist))
-#             ax[1].imshow(image[0], cmap = "gray")
-#             ax[1].set_title("Prediction= " + str(prediction_mnist_data[0]))
-#             plt.tight_layout()
+#         # if True:
+#             # dist = get_distance(input_reshape_images_reverse(rast_nparray), image)
+#             dist = round(get_distance(rast_nparray.reshape(1,28,28), image), 2)
+#             f, ax = plt.subplots(ncols = 3)
+#             ax[1].imshow(rast_nparray.reshape(28, 28), cmap = "gray")
+#             ax[1].set_title("Prediction= " + str(prediction[0]) + "\n" + "/Dist =" + str(dist))
+#             ax[0].imshow(image[0], cmap = "gray")
+#             ax[0].set_title("Prediction= " + str(prediction_mnist_data[0]))
+#             ax[2].imshow(xai_image[0], cmap = "jet")
+#             for region_pos in list_of_regions:
+#                 rect = patches.Rectangle((region_pos[0], region_pos[1]), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
+#                 ax[2].add_patch(rect)
+#             # plt.tight_layout()
 #             plt.savefig("./mutants/mutant_img="+str(image_index)+"_ext="+str(extent)+"_sqr="+str(square_size)+"_Pred="+str(prediction[0])+"_PredOrig="+str(prediction_mnist_data[0])+"_lab="+str(label)+"_"+str(iteration)+'.png')
+#             plt.cla()
 
 
 
