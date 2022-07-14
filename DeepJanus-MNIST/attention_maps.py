@@ -1189,7 +1189,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
         ax_fitness.set_ylabel("Fitness ff2")
         # ax_fitness.set_xticks([10,20,30,40,50,60,70,80,90,100])
         ax_fitness.set_xlim([0, number_of_mutations])
-        ax_fitness.set_ylim([0.95, 1])
+        ax_fitness.set_ylim([0.1, 1.1])
         # ax_fitness.set_yticks([0.5,0.6,0.7,0.8,0.9,1])
         ax_fitness.grid(True)
 
@@ -1203,7 +1203,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
         ax_predictions.set_xlabel("Iteration")
         ax_predictions.set_ylabel("Mutant Prediction Probablity")
         ax_predictions.set_xlim([0, number_of_mutations])
-        ax_predictions.set_ylim([0.95, 1])
+        ax_predictions.set_ylim([0.1, 1.1])
         ax_predictions.grid(True)
         
 
@@ -1211,9 +1211,11 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
         plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]))
         plt.cla()
 
-def create_folder(number_of_mutations, repetition, extent, label, image_index, method, attention, run_id):
+def create_folder(mutant_root_folder, number_of_mutations, repetition, extent, label, image_index, method, attention, run_id):
     # run_id_2 = str(Timer.start.strftime('%s'))
-    DST = "mutants/debug/debug_"+ Mth1_str + run_id +"/NM="+ str(number_of_mutations) + "_REP=" + str(repetition) + "_ext="+str(extent)+"_lbl="+str(label)+"_IMG_INDEX="+str(image_index)+"_mth="+method+"_ATT="+str(attention)#+"_run_"+str(run_id_2)
+    # DST = "mutants/debug/debug_"+ Mth1_str + run_id +"/NM="+ str(number_of_mutations) + "_REP=" + str(repetition) + "_ext="+str(extent)+"_lbl="+str(label)+"_IMG_INDEX="+str(image_index)+"_mth="+method+"_ATT="+str(attention)#+"_run_"+str(run_id_2)
+    # DST = mutant_root_folder +"/NM="+ str(number_of_mutations) + "_REP=" + str(repetition) + "_ext="+str(extent)+"_lbl="+str(label)+"_IMG_INDEX="+str(image_index)+"_mth="+method+"_ATT="+str(attention)#+"_run_"+str(run_id_2)
+    DST = mutant_root_folder + "/IMG_INDEX="+str(image_index) + "_REP=" + str(repetition) + "_lbl="+str(label)
     if not exists(DST):
         makedirs(DST)
 
@@ -1238,6 +1240,11 @@ def input_reshape_images_reverse_orig(x):
     x_reshape *= 255.0
     return x_reshape
 
+def normalize_2d(matrix):
+    norm = np.linalg.norm(matrix)
+    matrix = matrix/norm  # normalized matrix
+    return matrix
+
 
 #------------Mutant Unit Tests - Method to generate mutant digits based only on the attention maps strategy ------------#
 # Instructions: 
@@ -1245,7 +1252,7 @@ def input_reshape_images_reverse_orig(x):
 #  2 - Create the results folder: "./mutant/"
 #  3 - Run "python attention_maps.py"
 
-STRATEGY = 3
+STRATEGY = 4
 
 mnist = keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -1351,7 +1358,7 @@ elif STRATEGY == 2:
                     iteration_list = []
                     fitness_function = []
                     prediction_function = []
-                    # folder_path = create_folder(number_of_mutations, number_of_points, extent, LABEL, OCCURENCE, METHOD, ATT_METH, run_id)
+                    # folder_path = create_folder(DST, number_of_mutations, number_of_points, extent, LABEL, OCCURENCE, METHOD, ATT_METH, run_id)
                     # print("Folder Path Created", folder_path)
                     while (iteration < number_of_mutations):
                         iteration += 1
@@ -1439,6 +1446,7 @@ elif STRATEGY == 2:
 
 elif STRATEGY == 3:
 
+    MUTANTS_ROOT_FOLDER = "mutants/debug/"
     LABEL = 5
     METHOD = "remut"
     # METHOD_LIST = ["remut","NOremut"]
@@ -1451,21 +1459,22 @@ elif STRATEGY == 3:
     LABEL_LIST = list(range (0,10))
     # ATTENTION_METHOD = "mth1"
     ATTENTION_METHOD = "mth5"
-    SAVE_IMAGES = False
-    n = 100
-    extent = 2
-    number_of_points = 4
+    SAVE_IMAGES = True
+    n = 1000
+    extent = 1
+    number_of_points = 5
     square_size = 3
     images = x_test[:n]
     labels = y_test[:n]
-    number_of_mutations = 20
+    number_of_mutations = 1000
+    number_of_repetitions = 10
     OCCURENCE = 2  
     MTH1 = True
     Mth1_str = ""
     if MTH1 == True: 
         Mth1_str = "mth1"
     run_id = str(Timer.start.strftime('%s')) 
-    DST = "mutants/debug/debug_" + Mth1_str + run_id
+    DST = MUTANTS_ROOT_FOLDER + "debug_" + ATTENTION_METHOD + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_ID=" + run_id
     makedirs(DST)
     csv_path = DST + "/stats.csv"
     if os.path.exists(csv_path):
@@ -1497,7 +1506,7 @@ elif STRATEGY == 3:
         writer = csv.writer(f1)
         writer.writerow(["IMG_Index", "Label", "Its_Mean_Att", "Its_Mean_Normal", "Its_Std_Att", "Its_Std_Normal", "#MissClass_found_att","#MissClass_found_Normal"])
 
-        
+    start_time = time.time()    
     for METHOD in METHOD_LIST:
         print("METHOD: ", METHOD) 
                              
@@ -1518,7 +1527,7 @@ elif STRATEGY == 3:
             
             iterations_detection_normal_list = []
             iterations_detection_att_list = []
-            for REPETITION in range(1,11):
+            for REPETITION in range(1,number_of_repetitions + 1):
                 print("Repetition", REPETITION)
                 digit_reshaped_1 = input_reshape_images(digit_1)
                 digit_reshaped_2 = input_reshape_images(digit_2)
@@ -1536,11 +1545,11 @@ elif STRATEGY == 3:
                 if ATTENTION_METHOD == "mth1": number_of_points = "NA"
                 miss_classification_found_att = False
                 miss_classification_found_normal = False
-                # folder_path = create_folder(number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id)
+                # folder_path = create_folder(DST, number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id)
                 # print("Folder Path Created", folder_path)
                 method_winner = None
-                iterations_detection_att = "No miss classification"
-                iterations_detection_normal = "No miss classification"
+                iterations_detection_att = "NA"
+                iterations_detection_normal = "NA"
                 iteration = 0
                 while (iteration < number_of_mutations):
                     iteration += 1                    
@@ -1603,7 +1612,7 @@ elif STRATEGY == 3:
                         if miss_classification_found_att == False:
                             iterations_detection_att_list.append(iteration)
                             iterations_detection_att = iteration
-                            # folder_path = create_folder(number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
+                            # folder_path = create_folder(DST, number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
                             # save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
                             # make_gif(folder_path, folder_path + "/gif")
                             # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0])
@@ -1617,7 +1626,7 @@ elif STRATEGY == 3:
                         if miss_classification_found_normal == False:
                             iterations_detection_normal_list.append(iteration)
                             iterations_detection_normal = iteration
-                            # folder_path = create_folder(number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
+                            # folder_path = create_folder(DST, number_of_mutations, number_of_points, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
                             # save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
                             # make_gif(folder_path, folder_path + "/gif")
                             # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0])
@@ -1649,10 +1658,11 @@ elif STRATEGY == 3:
                                 digit_reshaped_2 = mutant_digit_normal
                 if miss_classification_found_att == True or miss_classification_found_normal == True:
                 # if True:
-                    if SAVE_IMAGES == True:
-                        folder_path = create_folder(number_of_mutations, REPETITION, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
-                        save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
-                        make_gif(folder_path, folder_path + "/gif")
+                    if SAVE_IMAGES == True and list_of_svg_points != None:
+                        folder_path = create_folder(DST, number_of_mutations, REPETITION, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
+                        save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0])
+                        # save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
+                        # make_gif(folder_path, folder_path + "/gif")
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
                         writer.writerow([image_index, LABEL, REPETITION, iterations_detection_att, iterations_detection_normal, method_winner])                        
@@ -1694,7 +1704,101 @@ elif STRATEGY == 3:
                         #         ax[2].add_patch(rect)
                         # plt.savefig("./mutants/mutant_img=" + str(iteration) +"_LABEL="+str(LABEL))
                         # plt.cla()
+    end_time = time.time()
+    print("Total Durantion time: ", str(end_time-start_time))
+    print("n= ", n)
+    print("Number of mutations= ", number_of_mutations)
+
+elif STRATEGY == 4:
             
+    mnist = keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    model = keras.models.load_model(MODEL)
+
+    n = 100
+    images = x_test[:n]
+    labels = y_test[:n]
+    # print("images.shape", images.shape)
+
+    time_list_seq = []
+    time_list_batch = []
+    # list_of_n = [100, 250, 500, 750, 1000]
+    # list_of_n = [10, 20, 30]
+    list_of_n = [i for i in list(range(8001)) if (i % 50 == 0 and i > 0 and i <= 1000) or (i == 2000) or (i == 4000) or (i == 8000)]
+    print(list_of_n)
+
+    csv_path = "./xai/stats.csv"
+    if os.path.exists(csv_path):
+        append_write = 'a'  # append if already exists
+    else:
+        append_write = 'w'  # make a new file if not
+
+    with open(csv_path, append_write) as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["Number of Images", "Time for Seq", "Time for Batch"])
+    for n in list_of_n:
+
+        images = x_test[:n]
+        #Batch Method    
+        start_time = time.time()
+        cams = get_XAI_image(images)
+        end_time = time.time()
+        delta_time_batch = (end_time - start_time)
+        time_list_batch.append(delta_time_batch)
+        print("Time to compute heatmaps for " + str(n) + " images in BATCH: ", delta_time_batch)
+
+        #Sequential Method
+        start_time = time.time()
+        for image_index in range(images.shape[0]):
+            cam = get_XAI_image(images[image_index].reshape(1,28,28))
+            # plt.imshow(cams[image_index])
+            # plt.imshow(images[image_index])
+            # plt.savefig("./xai/cam_orig_"+str(image_index)+".jpg")
+        end_time = time.time()
+        delta_time_seq = (end_time - start_time)
+        time_list_seq.append(delta_time_seq)
+        print("Time to compute heatmaps for " + str(n) + " images SEQUENTIALLY: ", delta_time_seq)
+
+        with open(csv_path, "a") as f1:
+            writer = csv.writer(f1)
+            writer.writerow([n, delta_time_seq, delta_time_batch])
+
+
+    fig, ax = plt.subplots()
+    # l_batch, = ax.plot(list_of_n, time_list_batch, "b", label = "Time for Seq")
+    # l_seg, = ax.plot(list_of_n, time_list_seq, "r", label = "Time for Batch")
+    l_batch = ax.scatter(list_of_n, time_list_batch, c = "blue", label = "Sequentially")
+    l_seg = ax.scatter(list_of_n, time_list_seq, c= "red", label = "Batch")
+    # ax.legend((l_seg,l_batch), ('Sequentially', "Batch"), loc='upper left', shadow=True)
+    ax.legend()
+    ax.grid(True)
+    ax.set_ylabel('Time (s)')
+    ax.set_xlabel('Number of Images (n)')
+    ax.set_title('Performance Analysis')
+    plt.savefig("./xai/time_analysis.jpg")
+
+    # # print("cams.shape",cams.shape)
+    # # int_cams = (normalize_2d(cams) * 1000).astype(int)
+    # # int_cams = normalize_2d(cams)
+    # # # int_cams = (cams * 100).astype(int)
+    # # print(int_cams[2][24][11])
+    # # print(int_cams[2][0][0])
+    # # print(int_cams[2][20][10])
+    # # for line in range(images.shape[1]):
+    # #     print(int_cams[2][line])
+
+    # start_time = time.time()
+    # for image_index in range(images.shape[0]):
+    #     cam = get_XAI_image(images[image_index].reshape(1,28,28))
+    #     # plt.imshow(cams[image_index])
+    #     # plt.imshow(images[image_index])
+    #     # plt.savefig("./xai/cam_orig_"+str(image_index)+".jpg")
+    # end_time = time.time()
+    # print("Time to compute heatmaps for " + str(n) + " images SEQUENTIALLY: ", (end_time - start_time))
+
+    
+
 
 
 
