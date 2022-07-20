@@ -6,7 +6,7 @@ POPSIZE = 100
 STOP_CONDITION = "iter"
 #STOP_CONDITION = "time"
 
-NGEN = 100
+NGEN = 15
 RUNTIME = 3600
 STEPSIZE = 10
 # Mutation Hyperparameters
@@ -53,3 +53,18 @@ EXPLABEL = 5
 
 #TODO: set interpreter
 INTERPRETER = '/home/vin/yes/envs/tf_gpu/bin/python'
+
+#Attention Maps Options:
+
+MUTANTS_ROOT_FOLDER = "mutants/debug/"    
+METHOD_LIST = ["remut"]
+# METHOD_LIST = ["NOremut"]
+ATTENTION_METHOD = "mth5"
+# ATTENTION_METHOD = "mth5"
+SAVE_IMAGES = True
+N = 100
+EXTENT = 0.1
+NUMBER_OF_POINTS = 1
+SQUARE_SIZE = 3
+NUMBER_OF_MUTATIONS = 1000
+NUMBER_OF_REPETITIONS = 1
