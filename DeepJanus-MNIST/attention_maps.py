@@ -784,7 +784,7 @@ def apply_mutoperator_attention_2_1(input_img, svg_path, extent, square_size):
             # print("mutated coordinate", mutated_coordinate_tuple)
             path = path.replace(original_coordinate, mutated_coordinate_tuple)
 
-        return path, list_of_points_inside_square_attention_patch, xai
+        return path, list_of_points_inside_square_attention_patch, xai, list_of_points_inside_square_attention_patch
     else: 
         return None, None, xai
         
@@ -859,7 +859,7 @@ def input_reshape_images_reverse(x):
     #     x_reshape = x.reshape(x.shape[0], 1, 28, 28)
     # else:
     #     x_reshape = x.reshape(x.shape[0], 28, 28, 1)
-    x_reshape = x.reshape(x.shape[0], 28, 28)
+    x_reshape = x.reshape(x.shape[0], 28, 28, 1)
     x_reshape = x_reshape.astype('float32')
     x_reshape *= 255.0
     return x_reshape
@@ -999,9 +999,9 @@ def apply_mutoperator_attention(input_img, svg_path, extent, square_size, number
         path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
 
         # TODO: it seems that the points inside the square attention patch do not precisely match the point coordinates in the svg, to be tested
-        return path, list_of_svg_points, xai
+        return path, list_of_svg_points, xai, original_point
     else:
-        return svg_path, None, xai
+        return svg_path, None, xai, None
 
 def apply_mutoperator1(input_img, svg_path, extent):
 
@@ -1041,7 +1041,10 @@ def apply_mutoperator2(input_img, svg_path, extent):
         random_coordinate_index = randint(0, num_matches - 1)
         svg_iter = re.finditer(pattern, svg_path)
         control_point = next(value for index, value in enumerate(svg_iter) if int(index == int(random_coordinate_index/4)))
+        # print("control_point", control_point)
         group_index = (random_coordinate_index % 4) + 1
+        # print("control_point.group(group_index)", control_point.group(group_index))
+        # print("group_index", group_index)
         value = apply_displacement_to_mutant(control_point.group(group_index), extent)
         path = svg_path[:control_point.start(group_index)] + value + svg_path[control_point.end(group_index):]
     else:
@@ -1055,18 +1058,18 @@ def generate_mutant(image, extent, square_size, number_of_points, mutation_metho
     # list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(image, square_size, square_size, get_svg_path(input[0]))
     if mutation_method == True:
         if ATTENTION_METHOD == "mth5":
-            mutante_digit_path, list_of_svg_points, xai = apply_mutoperator_attention(image, get_svg_path(image[0]), extent, square_size, number_of_points)
+            mutante_digit_path, list_of_svg_points, xai, point_mutated = apply_mutoperator_attention(image, get_svg_path(image[0]), extent, square_size, number_of_points)
         elif ATTENTION_METHOD == "mth1":
-            mutante_digit_path, list_of_svg_points, xai = apply_mutoperator_attention_2_1(image, get_svg_path(image[0]), extent, square_size)
+            mutante_digit_path, list_of_svg_points, xai, point_mutated = apply_mutoperator_attention_2_1(image, get_svg_path(image[0]), extent, square_size)
         # print(mutante_digit_path)
         if list_of_svg_points != None and ("C" in mutante_digit_path) and ("M" in mutante_digit_path):
             rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
             # print("original_mutated_digit shape", rast_nparray.shape)
             # print("original_mutated_digit max", rast_nparray.max())
             # print("original_mutated_digit min", rast_nparray.min())   
-            return rast_nparray, list_of_svg_points, xai
+            return rast_nparray, list_of_svg_points, xai, point_mutated
         else:
-            return image, None, xai
+            return image, None, xai, None
     else: 
         mutante_digit_path = apply_mutoperator2(image, get_svg_path(image[0]), extent)
         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
@@ -1088,6 +1091,7 @@ def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_poi
 
     ax2 = fig.add_subplot(gs[0,2])
     ax2.imshow(xai_image[0], cmap = "jet")
+    # ax2.imshow(image.reshape(28,28), cmap = "gray")
     ax2.scatter(*zip(*list_of_svg_points[0]))
     # print("list_of_regions", list_of_svg_points[0])
     # for region_pos in list_of_regions[0]:
@@ -1119,8 +1123,8 @@ def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_poi
     ax_fitness.set_xlabel("Iteration")
     ax_fitness.set_ylabel("Fitness ff2")
     # ax_fitness.set_xticks([10,20,30,40,50,60,70,80,90,100])
-    ax_fitness.set_xlim([0, number_of_mutations])
-    ax_fitness.set_ylim([0.95, 1])
+    # ax_fitness.set_xlim([0, number_of_mutations])
+    ax_fitness.set_ylim([0.1, 1.1])
     # ax_fitness.set_yticks([0.5,0.6,0.7,0.8,0.9,1])
     ax_fitness.grid(True)
 
@@ -1133,8 +1137,8 @@ def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_poi
     ax_predictions.set_title("Mutant Prediction Probablity vs Iteration")
     ax_predictions.set_xlabel("Iteration")
     ax_predictions.set_ylabel("Mutant Prediction Probablity")
-    ax_predictions.set_xlim([0, number_of_mutations])
-    ax_predictions.set_ylim([0.95, 1])
+    # ax_predictions.set_xlim([0, number_of_mutations])
+    ax_predictions.set_ylim([0.1, 1.1])
     ax_predictions.grid(True)
     
 
@@ -1143,73 +1147,77 @@ def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_poi
     plt.cla()
 
 def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list):
-    
+    if(len(iteration_list)) > 20:
+        print_interval = int(len(iteration_list)/20)
+    else:
+        print_interval = 1
     for img_index in range(len(iteration_list)):
-        fig = plt.figure(figsize=(9,10))
-        gs = gridspec.GridSpec(nrows=3,ncols=3, width_ratios=[1,1,1], height_ratios=[1,1,1])
-        ax0 = fig.add_subplot(gs[0,0])
-        ax0.imshow(mutant_image_normal_list[img_index].reshape(28, 28), cmap = "gray")
-        ax0.set_title("Normal Mutation/Pred = " + str(pred_normal_list[img_index]), color="red")
+        if img_index % print_interval == 0 or img_index == len(iteration_list) - 1:
+            fig = plt.figure(figsize=(9,10))
+            gs = gridspec.GridSpec(nrows=3,ncols=3, width_ratios=[1,1,1], height_ratios=[1,1,1])
+            ax0 = fig.add_subplot(gs[0,0])
+            ax0.imshow(mutant_image_normal_list[img_index].reshape(28, 28), cmap = "gray")
+            ax0.set_title("Normal Mutation/Pred = " + str(pred_normal_list[img_index]), color="red")
 
-        ax1 = fig.add_subplot(gs[0,1])
-        ax1.imshow(mutant_image_att_list[img_index].reshape(28, 28), cmap = "gray")
-        ax1.set_title("Attention Mutation/Pred= " + str(pred_att_list[img_index]), color="blue")
+            ax1 = fig.add_subplot(gs[0,1])
+            ax1.imshow(mutant_image_att_list[img_index].reshape(28, 28), cmap = "gray")
+            ax1.set_title("Attention Mutation/Pred= " + str(pred_att_list[img_index]), color="blue")
 
-        ax2 = fig.add_subplot(gs[0,2])
-        ax2.imshow(xai_image_list[img_index][0], cmap = "jet")
-        ax2.scatter(*zip(*list_of_svg_points_list[img_index][0]))
-        # print("list_of_regions", list_of_svg_points[0])
-        # for region_pos in list_of_regions[0]:
-        #     rect = patches.Rectangle((region_pos[0], region_pos[1]), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
-        #     ax[2].add_patch(rect)
-        # plt.tight_layout()
-        if ATTENTION_METHOD == "mth5":
-            for pos in list_of_svg_points_list[img_index][0]:
-                x = pos[0]
-                y = pos[1]
-                x_rounded = round(x,2)
-                y_rounded = round(y,2)
-                ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
-                rect = patches.Rectangle((x-(square_size/2), y-(square_size/2)), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
-                ax2.add_patch(rect)
-        elif ATTENTION_METHOD == "mth1":
-            for pos in list_of_svg_points_list[img_index][0]:
-                x = pos[0]
-                y = pos[1]
-                x_rounded = round(x,2)
-                y_rounded = round(y,2)
-                ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
-        ax_fitness = fig.add_subplot(gs[1,:])
-        ax_fitness.plot(iteration_list, fitness_function_att, "b", label = "Attention Algorithm")
-        ax_fitness.plot(iteration_list[img_index], fitness_function_att[img_index], marker="o", markeredgecolor = "blue")
-        ax_fitness.plot(iteration_list, fitness_function_normal, "r", label = "Normal Algorithm")
-        ax_fitness.plot(iteration_list[img_index], fitness_function_normal[img_index], marker="o", markeredgecolor = "blue")
-        ax_fitness.set_title("Fitness ff2 vs Iteration")
-        ax_fitness.set_xlabel("Iteration")
-        ax_fitness.set_ylabel("Fitness ff2")
-        # ax_fitness.set_xticks([10,20,30,40,50,60,70,80,90,100])
-        ax_fitness.set_xlim([0, number_of_mutations])
-        ax_fitness.set_ylim([0.1, 1.1])
-        # ax_fitness.set_yticks([0.5,0.6,0.7,0.8,0.9,1])
-        ax_fitness.grid(True)
+            ax2 = fig.add_subplot(gs[0,2])
+            ax2.imshow(xai_image_list[img_index][0], cmap = "jet")
+            ax2.scatter(*zip(*list_of_svg_points_list[img_index][0]))
+            # print("list_of_regions", list_of_svg_points[0])
+            # for region_pos in list_of_regions[0]:
+            #     rect = patches.Rectangle((region_pos[0], region_pos[1]), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
+            #     ax[2].add_patch(rect)
+            # plt.tight_layout()
+            if ATTENTION_METHOD == "mth5":
+                for pos in list_of_svg_points_list[img_index][0]:
+                    x = pos[0]
+                    y = pos[1]
+                    x_rounded = round(x,2)
+                    y_rounded = round(y,2)
+                    ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
+                    rect = patches.Rectangle((x-(square_size/2), y-(square_size/2)), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
+                    ax2.add_patch(rect)
+            elif ATTENTION_METHOD == "mth1":
+                for pos in list_of_svg_points_list[img_index][0]:
+                    x = pos[0]
+                    y = pos[1]
+                    x_rounded = round(x,2)
+                    y_rounded = round(y,2)
+                    ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
+            ax_fitness = fig.add_subplot(gs[1,:])
+            ax_fitness.plot(iteration_list, fitness_function_att, "b", label = "Attention Algorithm")
+            ax_fitness.plot(iteration_list[img_index], fitness_function_att[img_index], marker="o", markeredgecolor = "blue")
+            ax_fitness.plot(iteration_list, fitness_function_normal, "r", label = "Normal Algorithm")
+            ax_fitness.plot(iteration_list[img_index], fitness_function_normal[img_index], marker="o", markeredgecolor = "blue")
+            ax_fitness.set_title("Fitness ff2 vs Iteration")
+            ax_fitness.set_xlabel("Iteration")
+            ax_fitness.set_ylabel("Fitness ff2")
+            # ax_fitness.set_xticks([10,20,30,40,50,60,70,80,90,100])
+            # ax_fitness.set_xlim([0, number_of_mutations])
+            ax_fitness.set_ylim([0.1, 1.1])
+            # ax_fitness.set_yticks([0.5,0.6,0.7,0.8,0.9,1])
+            ax_fitness.grid(True)
 
-        # print("prediction_function", prediction_function)
-        ax_predictions = fig.add_subplot(gs[2,:])
-        ax_predictions.plot(iteration_list, prediction_function_att, "b" ,label = "Attention Algorithm")
-        ax_predictions.plot(iteration_list[img_index], prediction_function_att[img_index], marker="o", markeredgecolor = "blue")
-        ax_predictions.plot(iteration_list, prediction_function_normal, "r" ,label = "Normal Algorithm")
-        ax_predictions.plot(iteration_list[img_index], prediction_function_normal[img_index], marker="o", markeredgecolor = "blue")
-        ax_predictions.set_title("Mutant Prediction Probablity vs Iteration")
-        ax_predictions.set_xlabel("Iteration")
-        ax_predictions.set_ylabel("Mutant Prediction Probablity")
-        ax_predictions.set_xlim([0, number_of_mutations])
-        ax_predictions.set_ylim([0.1, 1.1])
-        ax_predictions.grid(True)
-        
+            # print("prediction_function", prediction_function)
+            ax_predictions = fig.add_subplot(gs[2,:])
+            ax_predictions.plot(iteration_list, prediction_function_att, "b" ,label = "Attention Algorithm")
+            ax_predictions.plot(iteration_list[img_index], prediction_function_att[img_index], marker="o", markeredgecolor = "blue")
+            ax_predictions.plot(iteration_list, prediction_function_normal, "r" ,label = "Normal Algorithm")
+            ax_predictions.plot(iteration_list[img_index], prediction_function_normal[img_index], marker="o", markeredgecolor = "blue")
+            ax_predictions.set_title("Mutant Prediction Probablity vs Iteration")
+            ax_predictions.set_xlabel("Iteration")
+            ax_predictions.set_ylabel("Mutant Prediction Probablity")
+            # ax_predictions.set_xlim([0, number_of_mutations])
+            ax_predictions.set_ylim([0.1, 1.1])
+            ax_predictions.grid(True)
+            
 
-        plt.tight_layout()
-        plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]))
-        plt.cla()
+            plt.tight_layout()
+            plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]))
+            plt.cla()
 
 def create_folder(mutant_root_folder, number_of_mutations, repetition, extent, label, image_index, method, attention, run_id):
     # run_id_2 = str(Timer.start.strftime('%s'))
@@ -1252,7 +1260,7 @@ def normalize_2d(matrix):
 #  2 - Create the results folder: "./mutant/"
 #  3 - Run "python attention_maps.py"
 
-STRATEGY = 4
+STRATEGY = 3
 
 mnist = keras.datasets.mnist
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -1446,6 +1454,8 @@ elif STRATEGY == 2:
 
 elif STRATEGY == 3:
 
+    random.seed(0)
+
     MUTANTS_ROOT_FOLDER = "mutants/debug/"
     LABEL = 5
     METHOD = "remut"
@@ -1460,14 +1470,14 @@ elif STRATEGY == 3:
     # ATTENTION_METHOD = "mth1"
     ATTENTION_METHOD = "mth5"
     SAVE_IMAGES = True
-    n = 1000
-    extent = 1
-    number_of_points = 5
+    n = 100
+    extent = 0.5
+    number_of_points = 1
     square_size = 3
-    images = x_test[:n]
-    labels = y_test[:n]
+    images = x_test[44:n]
+    labels = y_test[44:n]
     number_of_mutations = 1000
-    number_of_repetitions = 10
+    number_of_repetitions = 1
     OCCURENCE = 2  
     MTH1 = True
     Mth1_str = ""
@@ -1566,15 +1576,20 @@ elif STRATEGY == 3:
                         fitness_1 = evaluate_ff2(pred_class_1, LABEL)
                         # print("fitness", fitness)
                                                 
-                        mutant_digit_att, list_of_svg_points, xai = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), extent, square_size, number_of_points, True)                        
+                        mutant_digit_att, list_of_svg_points, xai, point_mutated = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), extent, square_size, number_of_points, True) 
+                        # print("point_mutated", point_mutated)                            
+                        # print("list_of_svg_points", list_of_svg_points)                   
                         # print(list_of_svg_points)
                         if list_of_svg_points == None: 
-                            break               
+                            break     
+                        list_of_svg_points = [[point_mutated]]          
                         # mutant_digit_reshaped = input_reshape_images_reverse(mutant_digit)
                         # if type(mutant_digit) != None:
                             # print("mutant_digit shape", mutant_digit.shape)
                             # print("mutant_digit max", mutant_digit.max())
-                            # print("mutant_digit min", mutant_digit.min())       
+                            # print("mutant_digit min", mutant_digit.min()) 
+                        shape = mutant_digit_att.shape
+                        # print(shape)
                         pred_input_mutant_att = model.predict_classes(mutant_digit_att)
                         # print("pred_input_mutant", pred_input_mutant)
                         pred_class_mutant_att = model.predict(mutant_digit_att)
@@ -1656,13 +1671,13 @@ elif STRATEGY == 3:
                             # print("FITNESS!!!!")
                             if METHOD == "remut":
                                 digit_reshaped_2 = mutant_digit_normal
-                if miss_classification_found_att == True or miss_classification_found_normal == True:
-                # if True:
+                # if miss_classification_found_att == True or miss_classification_found_normal == True:
+                if True:
                     if SAVE_IMAGES == True and list_of_svg_points != None:
                         folder_path = create_folder(DST, number_of_mutations, REPETITION, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
-                        save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0])
-                        # save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
-                        # make_gif(folder_path, folder_path + "/gif")
+                        # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0])
+                        save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list)
+                        make_gif(folder_path, folder_path + "/gif")
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
                         writer.writerow([image_index, LABEL, REPETITION, iterations_detection_att, iterations_detection_normal, method_winner])                        
