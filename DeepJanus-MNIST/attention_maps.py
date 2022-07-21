@@ -1009,8 +1009,10 @@ def apply_mutoperator1(input_img, svg_path, extent):
         # find all the vertexes
         pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
         segments = pattern.findall(svg_path)
+        # print("segments", segments)
 
         svg_iter = re.finditer(pattern, svg_path)
+        # print("svg_iter", svg_iter)
         # chose a random vertex
         num_matches = len(segments) * 2
 
@@ -1026,7 +1028,35 @@ def apply_mutoperator1(input_img, svg_path, extent):
             break
 
     path = svg_path[:vertex.start(group_index)] + value + svg_path[vertex.end(group_index):]
-    return path
+    return path, vertex.group(group_index)
+
+def apply_mutoperator_custom(input_img, svg_path, extent):
+
+    while(True):
+        # find all the vertexes
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        segments = pattern.findall(svg_path)
+        # print("segments", segments)
+        segments = random.choices(segments, k=5)
+
+        svg_iter = re.finditer(pattern, svg_path)
+        # print("svg_iter", svg_iter)
+        # chose a random vertex
+        num_matches = len(segments) * 2
+
+        random_coordinate_index = randint(0, num_matches - 1)
+        # print(random_coordinate_index)
+
+        vertex = next(value for index, value in enumerate(svg_iter) if int(index == int(random_coordinate_index / 2)))
+        group_index = (random_coordinate_index % 2) + 1
+
+        value = apply_displacement_to_mutant(vertex.group(group_index), extent)
+
+        if 0 <= float(value) <= 28:
+            break
+
+    path = svg_path[:vertex.start(group_index)] + value + svg_path[vertex.end(group_index):]
+    return path, vertex.group(group_index)
 
 
 def apply_mutoperator2(input_img, svg_path, extent):
@@ -1050,7 +1080,7 @@ def apply_mutoperator2(input_img, svg_path, extent):
     else:
         print("ERROR")
         print(svg_path)
-    return path
+    return path, control_point
 
 def generate_mutant(image, extent, square_size, number_of_points, mutation_method, ATTENTION_METHOD):
 
@@ -1071,12 +1101,12 @@ def generate_mutant(image, extent, square_size, number_of_points, mutation_metho
         else:
             return image, None, xai, None
     else: 
-        mutante_digit_path = apply_mutoperator2(image, get_svg_path(image[0]), extent)
+        mutante_digit_path, point_mutated = apply_mutoperator1(image, get_svg_path(image[0]), extent)
         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
         # print("original_mutated_digit shape", rast_nparray.shape)
         # print("original_mutated_digit max", rast_nparray.max())
         # print("original_mutated_digit min", rast_nparray.min())  
-        return rast_nparray    
+        return rast_nparray, point_mutated    
 
 def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal, pred_att, ATTENTION_METHOD, square_size, iteration):
     fig = plt.figure(figsize=(9,10))
@@ -1165,6 +1195,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
 
             ax2 = fig.add_subplot(gs[0,2])
             ax2.imshow(xai_image_list[img_index][0], cmap = "jet")
+            # print("SVG_points:", list_of_svg_points_list[img_index][0])
             ax2.scatter(*zip(*list_of_svg_points_list[img_index][0]))
             # print("list_of_regions", list_of_svg_points[0])
             # for region_pos in list_of_regions[0]:
@@ -1432,30 +1463,43 @@ def option3():
         NUMBER_OF_POINTS,\
         SQUARE_SIZE,\
         NUMBER_OF_MUTATIONS,\
-        NUMBER_OF_REPETITIONS
+        NUMBER_OF_REPETITIONS,\
+        RANDOM_SEED
 
-    random.seed(0)
+    random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
     model = keras.models.load_model(MODEL)
 
-    MUTANTS_ROOT_FOLDER = "mutants/debug/"    
-    METHOD_LIST = ["remut"]
-    ATTENTION_METHOD = "mth5"
-    SAVE_IMAGES = True
+    MUTANTS_ROOT_FOLDER = MUTANTS_ROOT_FOLDER  
+    METHOD_LIST = METHOD_LIST
+    ATTENTION_METHOD = ATTENTION_METHOD
+    SAVE_IMAGES = SAVE_IMAGES
     n = N
     extent = EXTENT
     number_of_points = NUMBER_OF_POINTS
     square_size = SQUARE_SIZE
     images = x_test[44:n]
     labels = y_test[44:n]
+    #Do a shuffle
+    # mylist = ["apple", "banana", "cherry"]
+    # random.shuffle(mylist)  
+
+    indices = np.arange(images.shape[0])
+    np.random.shuffle(indices)
+
+    images = images[indices]
+    labels = labels[indices]
+    # a, array([3, 4, 1, 2, 0])
+    # b, array([8, 9, 6, 7, 5])
+
     number_of_mutations = NUMBER_OF_MUTATIONS
     number_of_repetitions = NUMBER_OF_REPETITIONS
 
-    # Creating CDVs in the MUTANTS_ROOT_FOLDER
+    # Creating CSVs in the MUTANTS_ROOT_FOLDER
     run_id = str(Timer.start.strftime('%s')) 
-    DST = MUTANTS_ROOT_FOLDER + "debug_" + ATTENTION_METHOD + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_ID=" + run_id
+    DST = MUTANTS_ROOT_FOLDER + "debug_" + ATTENTION_METHOD + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_MutType=" + METHOD_LIST[0] + "_ID=" + run_id
     makedirs(DST)
     csv_path = DST + "/stats.csv"
     if os.path.exists(csv_path):
@@ -1486,6 +1530,16 @@ def option3():
     with open(csv_path_3, append_write) as f1:
         writer = csv.writer(f1)
         writer.writerow(["IMG_Index", "Label", "Its_Mean_Att", "Its_Mean_Normal", "Its_Std_Att", "Its_Std_Normal", "#MissClass_found_att","#MissClass_found_Normal"])
+
+    csv_path_4 = DST + "/stats_4.csv"
+    if os.path.exists(csv_path_3):
+        append_write = 'a'  # append if already exists
+    else:
+        append_write = 'w'  # make a new file if not
+
+    with open(csv_path_4, append_write) as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["Iteration", "Point Mutated Att","Point Mutated Normal", "List of points to be mutated Att"])
 
     start_time = time.time()    
     for METHOD in METHOD_LIST:
@@ -1518,6 +1572,9 @@ def option3():
                 list_of_svg_points_list = []
                 pred_input_mutant_att_list = []
                 pred_input_mutant_normal_list = []
+                mutated_points_att_list = []
+                mutated_points_normal_list = []
+                list_of_svg_points_list_2 = []
                 if ATTENTION_METHOD == "mth1": number_of_points = "NA"
                 miss_classification_found_att = False
                 miss_classification_found_normal = False
@@ -1531,27 +1588,37 @@ def option3():
 
                     # Check if a missclassification was already found for ATTENTION Method. If yes, the digit will not be mutated anymore
                     if miss_classification_found_att == False:
+                    # if False or iteration < 2:
                         pred_class_1 = model.predict(digit_reshaped_1)
                         fitness_1 = evaluate_ff2(pred_class_1, LABEL)                                                
                         mutant_digit_att, list_of_svg_points, xai, point_mutated = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), extent, square_size, number_of_points, True, ATTENTION_METHOD) 
 
                         #If there is no highest attention point found, it means the digit mutated is close to an invalid digit and we can stop mutating using Attention Method
                         if list_of_svg_points == None: 
-                            break     
-                        list_of_svg_points = [[point_mutated]]    
+                            break    
+                        list_of_svg_points_2 = list_of_svg_points 
+                        if ATTENTION_METHOD == "mth5":
+                            list_of_svg_points = [[point_mutated]]    
                         shape = mutant_digit_att.shape
                         pred_input_mutant_att = model.predict_classes(mutant_digit_att)
                         pred_class_mutant_att = model.predict(mutant_digit_att)
                         fitness_mutant_att = evaluate_ff2(pred_class_mutant_att, LABEL)
+                        mutated_points_att_list.append(point_mutated)
+                    else:
+                        mutated_points_att_list.append("NA")
 
                     # Check if a missclassification was already found for NORMAL Method. If yes, the digit will not be mutated anymore
                     if miss_classification_found_normal == False:
+                    # if False or iteration < 2:
                         pred_class_2 = model.predict(digit_reshaped_2)
                         fitness_2 = evaluate_ff2(pred_class_2, LABEL)
-                        mutant_digit_normal = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), extent, square_size, number_of_points, False, ATTENTION_METHOD)
+                        mutant_digit_normal, point_mutated_normal = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), extent, square_size, number_of_points, False, ATTENTION_METHOD)
                         pred_input_mutant_normal = model.predict_classes(mutant_digit_normal)
                         pred_class_mutant_normal = model.predict(mutant_digit_normal)
                         fitness_mutant_normal = evaluate_ff2(pred_class_mutant_normal, LABEL)
+                        mutated_points_normal_list.append(point_mutated_normal)
+                    else:
+                        mutated_points_normal_list.append("NA")
                     
                     #Appending all the data to the list. Necessary to generate the plots of mutations sequentially.
                     iteration_list.append(iteration)
@@ -1563,6 +1630,7 @@ def option3():
                     mutant_digit_normal_list.append(mutant_digit_normal)
                     xai_images_list.append(xai)
                     list_of_svg_points_list.append(list_of_svg_points)
+                    list_of_svg_points_list_2.append(list_of_svg_points_2)
                     pred_input_mutant_att_list.append(pred_input_mutant_att[0])
                     pred_input_mutant_normal_list.append(pred_input_mutant_normal[0])
 
@@ -1627,7 +1695,16 @@ def option3():
                     #method_winner -> Which method took less iterations to find a missclassification
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
-                        writer.writerow([image_index, LABEL, REPETITION, iterations_detection_att, iterations_detection_normal, method_winner])                        
+                        writer.writerow([image_index, LABEL, REPETITION, iterations_detection_att, iterations_detection_normal, method_winner])
+
+                    #Writing the points mutated to the .csv 
+                    list_to_write = []
+                    for iter in range(len(iteration_list)):
+                        list_to_write.append([iteration_list[iter], mutated_points_att_list[iter], mutated_points_normal_list[iter], list_of_svg_points_list_2[iter][0]])       
+
+                    with open(csv_path_4, "a") as f1:
+                        writer = csv.writer(f1)
+                        writer.writerows(list_to_write)
                 else:
                     with open(csv_path_2, "a") as f1:
                             writer = csv.writer(f1)
