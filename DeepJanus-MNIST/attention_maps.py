@@ -787,6 +787,25 @@ def apply_mutoperator_attention_2_1(input_img, svg_path, extent, square_size):
         return path, list_of_points_inside_square_attention_patch, xai, list_of_points_inside_square_attention_patch
     else: 
         return None, None, xai
+
+def apply_mutoperator_attention_distance_mth(input_img, svg_path, extent, square_size, number_of_points):
+    list_of_points_close_to_square_attention_patch, elapsed_time, xai, square_att_coordinates, original_svg_points = get_svg_points_distance_mth(input_img, square_size, square_size,
+                                                                                                     svg_path, number_of_points)
+    # list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
+    # if len(list_of_points_close_to_square_attention_patch) != 0:
+    if list_of_points_close_to_square_attention_patch != None:
+        original_point = random.choice(list_of_points_close_to_square_attention_patch)
+        original_coordinate = random.choice(original_point)
+
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+
+
+        path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+
+        # TODO: it seems that the points inside the square attention patch do not precisely match the point coordinates in the svg, to be tested
+        return path, list_of_points_close_to_square_attention_patch, xai, original_point, square_att_coordinates, original_svg_points
+    else:
+        return svg_path, None, xai, None, None, None
         
 
 def AM_get_attetion_svg_points_images_mth1_1(images, x_patch_size, y_patch_size, svg_path):
@@ -826,6 +845,74 @@ def AM_get_attetion_svg_points_images_mth1_1(images, x_patch_size, y_patch_size,
     # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
     return list_of_ControlPointsInsideRegion, "(end_time - start_time1)", xai
 
+def get_svg_points_distance_mth(images, x_patch_size, y_patch_size, svg_path, number_of_points):
+    """
+    get_svg_points_distance_mth Iterate all the image looking for the region with more attention and return list of SVG points (tuples) closest from those regions.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
+    # start_time1 = time.time()
+    xai = get_XAI_image(images)
+    # start_time = time.time()
+    # x, y = get_attetion_region(cam, images)
+    # list_of_ControlPointsCloseToRegion = []
+    for i in range(images.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+        if len(ControlPoints) != 0:
+            x, y = get_attetion_region(xai[i], images[i], x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+            list_of_ControlPointsCloseToRegion = getControlPointsCloseToRegion(x,y,x_patch_size,y_patch_size, controlPoints, number_of_points) #Getting all the points inside the highest attetion patch
+            # list_of_ControlPointsCloseToRegion.append(ControlPointsCloseToRegion)
+        else:
+            return None, "(end_time - start_time1)", xai, None, controlPoints
+
+    # end_time = time.time()
+
+    # xai_time = (start_time - start_time1)
+    # find_time = (end_time - start_time)
+    # total_time = (end_time - start_time1)
+    # print("Retrieve heatmap time: ", xai_time)            
+    # print("Find attention points time mth1: ", find_time) 
+    # print("Total time mth1: ", total_time) 
+    # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
+    return list_of_ControlPointsCloseToRegion, "(end_time - start_time1)", xai, (x,y), controlPoints
+
+def getControlPointsCloseToRegion(x,y, x_patch_size, y_patch_size, controlPoints, number_of_points):
+
+    listOfPointsAndDistances = []
+    square_coordinate_X = x + x_patch_size/2
+    square_coordinate_Y = y + y_patch_size/2
+    square_coordinate = (square_coordinate_X, square_coordinate_Y)
+    for point in controlPoints:
+        #Calculate the distance between the SVG Point (point) and the coordinates of the area with highest attention
+        dist = get_Euclidean_Distance(point, square_coordinate)
+        listOfPointsAndDistances.append([point, dist])
+
+    get_1 = itemgetter(1)
+    list_pos_and_values_sorted = sorted(listOfPointsAndDistances, key=get_1, reverse=False)
+    list_to_return = list_pos_and_values_sorted[0:number_of_points]
+    new_list = [item[0] for item in list_to_return]
+    # print(new_list)
+    return new_list
+
+
+    
+
+
+
+def get_Euclidean_Distance(point1, point2): #Point 1 and point 2 should be in this format (x,y) or [x,y]
+    x1 = point1[0]
+    y1 = point1[1]
+    x2 = point2[0] 
+    y2 = point2[1]
+    result= ((((x2 - x1 )**2) + ((y2-y1)**2) )**0.5)
+
+    return result
 def apply_displacement_to_mutant(value, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
     if random.uniform(0, 1) >= MUTOFPROB:
@@ -1091,17 +1178,19 @@ def generate_mutant(image, extent, square_size, number_of_points, mutation_metho
             mutante_digit_path, list_of_svg_points, xai, point_mutated = apply_mutoperator_attention(image, get_svg_path(image[0]), extent, square_size, number_of_points)
         elif ATTENTION_METHOD == "mth1":
             mutante_digit_path, list_of_svg_points, xai, point_mutated = apply_mutoperator_attention_2_1(image, get_svg_path(image[0]), extent, square_size)
+        elif ATTENTION_METHOD == "distances":
+            mutante_digit_path, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points = apply_mutoperator_attention_distance_mth(image, get_svg_path(image[0]), extent, square_size, number_of_points)
         # print(mutante_digit_path)
         if list_of_svg_points != None and ("C" in mutante_digit_path) and ("M" in mutante_digit_path):
             rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
             # print("original_mutated_digit shape", rast_nparray.shape)
             # print("original_mutated_digit max", rast_nparray.max())
             # print("original_mutated_digit min", rast_nparray.min())   
-            return rast_nparray, list_of_svg_points, xai, point_mutated
+            return rast_nparray, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points 
         else:
-            return image, None, xai, None
+            return image, None, xai, None, None, original_svg_points
     else: 
-        mutante_digit_path, point_mutated = apply_mutoperator1(image, get_svg_path(image[0]), extent)
+        mutante_digit_path, point_mutated = apply_mutoperator2(image, get_svg_path(image[0]), extent)
         rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
         # print("original_mutated_digit shape", rast_nparray.shape)
         # print("original_mutated_digit max", rast_nparray.max())
@@ -1176,7 +1265,7 @@ def save_image(mutant_image_normal, mutant_image_att, xai_image, list_of_svg_poi
     plt.savefig(folder_path + "/" + str(iteration) + "_predATR=" + str(pred_att) + "_predNOR=" + str(pred_normal))
     plt.cla()
 
-def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list, ATTENTION_METHOD, square_size):
+def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, original_svg_points_list, mutated_points_att_list_numeric):
     if(len(iteration_list)) > 20:
         print_interval = int(len(iteration_list)/20)
     else:
@@ -1196,7 +1285,8 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
             ax2 = fig.add_subplot(gs[0,2])
             ax2.imshow(xai_image_list[img_index][0], cmap = "jet")
             # print("SVG_points:", list_of_svg_points_list[img_index][0])
-            ax2.scatter(*zip(*list_of_svg_points_list[img_index][0]))
+            
+            # ax2.scatter(*zip(*list_of_svg_points_list[img_index]), c="blue")
             # print("list_of_regions", list_of_svg_points[0])
             # for region_pos in list_of_regions[0]:
             #     rect = patches.Rectangle((region_pos[0], region_pos[1]), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
@@ -1218,6 +1308,35 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
                     x_rounded = round(x,2)
                     y_rounded = round(y,2)
                     ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
+            elif ATTENTION_METHOD == "distances":
+                # print(original_svg_points_list[img_index])
+                #Printing all original SVG Points
+                ax2.scatter(*zip(*original_svg_points_list[img_index]), c="white")
+
+                #Printing all returned SVG points that are close to the highest attention path
+                ax2.scatter(*zip(*list_of_svg_points_list[img_index]), c="blue")
+
+                #Printing mutated point in another color
+                x_point_mutated = mutated_points_att_list_numeric[img_index][0]
+                y_point_mutated = mutated_points_att_list_numeric[img_index][1]
+                ax2.scatter(x_point_mutated, y_point_mutated, c="red")
+
+                #Printing the annotations of all returned SVG points that are closer to the highest attention path
+                for pos in list_of_svg_points_list[img_index]:
+                    x = pos[0]
+                    y = pos[1]
+                    x_rounded = round(x,2)
+                    y_rounded = round(y,2)                  
+                    ax2.annotate("("+str(x_rounded)+","+ str(y_rounded)+")", (pos[0], pos[1]))
+
+                #Printing the Rectangle of highest attention square region                
+                square_coordinate_X = square_att_coordinates_list[img_index][0]
+                square_coordinate_Y = square_att_coordinates_list[img_index][1]
+                ax2.scatter(square_coordinate_X, square_coordinate_Y, c="yellow")
+                # rect = patches.Rectangle((square_coordinate_X-(square_size/2), square_coordinate_Y-(square_size/2)), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
+                rect = patches.Rectangle((square_coordinate_X + 0.5, square_coordinate_Y + 0.5), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
+                ax2.add_patch(rect)
+
             ax_fitness = fig.add_subplot(gs[1,:])
             ax_fitness.plot(iteration_list, fitness_function_att, "b", label = "Attention Algorithm")
             ax_fitness.plot(iteration_list[img_index], fitness_function_att[img_index], marker="o", markeredgecolor = "blue")
@@ -1464,7 +1583,9 @@ def option3():
         SQUARE_SIZE,\
         NUMBER_OF_MUTATIONS,\
         NUMBER_OF_REPETITIONS,\
-        RANDOM_SEED
+        RANDOM_SEED,\
+        SHUFFLE_IMAGES,\
+        START_INDEX_DATASET
 
     random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
@@ -1480,17 +1601,18 @@ def option3():
     extent = EXTENT
     number_of_points = NUMBER_OF_POINTS
     square_size = SQUARE_SIZE
-    images = x_test[44:n]
-    labels = y_test[44:n]
+    images = x_test[START_INDEX_DATASET:n]
+    labels = y_test[START_INDEX_DATASET:n]
     #Do a shuffle
     # mylist = ["apple", "banana", "cherry"]
     # random.shuffle(mylist)  
 
-    indices = np.arange(images.shape[0])
-    np.random.shuffle(indices)
+    if SHUFFLE_IMAGES == True:
+        indices = np.arange(images.shape[0])
+        np.random.shuffle(indices)
 
-    images = images[indices]
-    labels = labels[indices]
+        images = images[indices]
+        labels = labels[indices]
     # a, array([3, 4, 1, 2, 0])
     # b, array([8, 9, 6, 7, 5])
 
@@ -1575,6 +1697,10 @@ def option3():
                 mutated_points_att_list = []
                 mutated_points_normal_list = []
                 list_of_svg_points_list_2 = []
+                square_att_coordinates_list = []
+                original_svg_points_list = []
+                mutated_points_att_list_numeric = []
+                
                 if ATTENTION_METHOD == "mth1": number_of_points = "NA"
                 miss_classification_found_att = False
                 miss_classification_found_normal = False
@@ -1591,7 +1717,7 @@ def option3():
                     # if False or iteration < 2:
                         pred_class_1 = model.predict(digit_reshaped_1)
                         fitness_1 = evaluate_ff2(pred_class_1, LABEL)                                                
-                        mutant_digit_att, list_of_svg_points, xai, point_mutated = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), extent, square_size, number_of_points, True, ATTENTION_METHOD) 
+                        mutant_digit_att, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), extent, square_size, number_of_points, True, ATTENTION_METHOD) 
 
                         #If there is no highest attention point found, it means the digit mutated is close to an invalid digit and we can stop mutating using Attention Method
                         if list_of_svg_points == None: 
@@ -1633,6 +1759,10 @@ def option3():
                     list_of_svg_points_list_2.append(list_of_svg_points_2)
                     pred_input_mutant_att_list.append(pred_input_mutant_att[0])
                     pred_input_mutant_normal_list.append(pred_input_mutant_normal[0])
+                    square_att_coordinates_list.append(square_att_coordinates)
+                    original_svg_points_list.append(original_svg_points)
+
+                    mutated_points_att_list_numeric.append(point_mutated)
 
                     #Checking if the prediction of the mutant digit generated by ATTENTION Method is different from the ground truth (label)
                     if pred_input_mutant_att[0] != LABEL:                        
@@ -1686,7 +1816,7 @@ def option3():
                     if SAVE_IMAGES == True and list_of_svg_points != None:
                         folder_path = create_folder(DST, number_of_mutations, REPETITION, extent, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id) 
                         # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
-                        save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, ATTENTION_METHOD, square_size)
+                        save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, original_svg_points_list, mutated_points_att_list_numeric)
                         make_gif(folder_path, folder_path + "/gif")
 
                     #Writing data to the stats_2.csv file - Data reagarding a cycle of mutations. 
