@@ -66,9 +66,13 @@ SAVE_IMAGES = True
 N = 54 #Nummber of Images to take from dataset
 START_INDEX_DATASET = 0
 EXTENT = 0.1
-NUMBER_OF_POINTS = 1
+NUMBER_OF_POINTS = 2
 SQUARE_SIZE = 2
 NUMBER_OF_MUTATIONS = 1000
-NUMBER_OF_REPETITIONS = 1
-RANDOM_SEED = 0
+NUMBER_OF_REPETITIONS = 5
+RANDOM_SEED = 1
 SHUFFLE_IMAGES = False
+NUMBER_OF_DIGIT_SAMPLES = 5 #Number of samples of a same digit that will be mutated in the experiment
+SEEDS_LIST = [4398, 980, 987423, 99982, 1123, 4098, 1946, 22601, 55037, 812109, 53898, 187988]
+
+SAVE_STATS4_CSV = False #Option to print the location of the points mutated at each iteration
