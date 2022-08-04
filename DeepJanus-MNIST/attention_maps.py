@@ -1305,7 +1305,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
     for img_index in range(len(iteration_list)):
         if img_index % print_interval == 0 or img_index == len(iteration_list) - 1:
             fig = plt.figure(figsize=(9,10))
-            gs = gridspec.GridSpec(nrows=3,ncols=3, width_ratios=[1,1,1], height_ratios=[1,1,1])
+            gs = gridspec.GridSpec(nrows=4,ncols=3, width_ratios=[1,1,1], height_ratios=[1,1,1,1])
             ax0 = fig.add_subplot(gs[0,0])
             ax0.imshow(mutant_image_normal_list[img_index].reshape(28, 28), cmap = "gray")
             ax0.set_title("Normal Mutation/Pred = " + str(pred_normal_list[img_index]), color="red")
@@ -1383,12 +1383,12 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
             # ax_fitness.set_yticks([0.5,0.6,0.7,0.8,0.9,1])
             ax_fitness.grid(True)
 
-            # twin object for two different y-axis on the sample plot
-            ax_fitness2= ax_fitness.twinx()
-            # make a plot with different y-axis using second axis object
-            ax_fitness2.plot(iteration_list, ext_att_list, color="blue")
-            ax_fitness2.plot(iteration_list, ext_normal_list, color="red")
-            ax_fitness2.set_ylabel("Extent Value",color="green",fontsize=14)
+            # # twin object for two different y-axis on the sample plot
+            # ax_fitness2= ax_fitness.twinx()
+            # # make a plot with different y-axis using second axis object
+            # ax_fitness2.plot(iteration_list, ext_att_list, color="blue")
+            # ax_fitness2.plot(iteration_list, ext_normal_list, color="red")
+            # ax_fitness2.set_ylabel("Extent Value",color="green",fontsize=14)
 
             # print("prediction_function", prediction_function)
             ax_predictions = fig.add_subplot(gs[2,:])
@@ -1402,6 +1402,19 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
             # ax_predictions.set_xlim([0, number_of_mutations])
             ax_predictions.set_ylim([0.1, 1.1])
             ax_predictions.grid(True)
+
+            # print("prediction_function", prediction_function)
+            ax_extent = fig.add_subplot(gs[3,:])
+            ax_extent.plot(iteration_list, ext_att_list, "b" ,label = "Extent Attention Algorithm")
+            ax_extent.plot(iteration_list[img_index], ext_att_list[img_index], marker="o", markeredgecolor = "blue")
+            ax_extent.plot(iteration_list, ext_normal_list, "r" ,label = "Extent Normal Algorithm")
+            ax_extent.plot(iteration_list[img_index], ext_normal_list[img_index], marker="o", markeredgecolor = "blue")
+            ax_extent.set_title("Extents vs Iteration")
+            ax_extent.set_xlabel("Iteration")
+            ax_extent.set_ylabel("Extent Value")
+            # ax_predictions.set_xlim([0, number_of_mutations])
+            ax_extent.set_ylim([0.05 , 1])
+            ax_extent.grid(True)
             
 
             plt.tight_layout()
@@ -1644,7 +1657,10 @@ def option3():
         START_INDEX_DATASET,\
         NUMBER_OF_DIGIT_SAMPLES,\
         SEEDS_LIST,\
-        SAVE_STATS4_CSV
+        SAVE_STATS4_CSV,\
+        EXTENT_STEP,\
+        EXTENT_LOWERBOUND,\
+        EXTENT_UPPERBOUND 
 
     random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
@@ -1782,6 +1798,9 @@ def option3():
                 ext_normal = EXTENT
                 number_of_times_fitness_function_does_not_change_att = 0
                 number_of_times_fitness_function_does_not_change_normal = 0
+                # fitness_1 = 1
+                # fitness_2 = 1
+                # fitness_mutant_att = 1
                 while (iteration < number_of_mutations):
                     iteration += 1                    
                     print("Iteration", iteration)
@@ -1789,11 +1808,18 @@ def option3():
                     # Check if a missclassification was already found for ATTENTION Method. If yes, the digit will not be mutated anymore
                     if miss_classification_found_att == False:
                     # if False or iteration < 2:
-                        pred_class_1 = model.predict(digit_reshaped_1)
-                        fitness_1 = evaluate_ff2(pred_class_1, LABEL)
+                        # pred_class_1 = model.predict(digit_reshaped_1)
+                        # fitness_1_tmp = evaluate_ff2(pred_class_1, LABEL)
+                        # if fitness_1_tmp < fitness_1:
+                        #     fitness_1 = fitness_1_tmp
                         if iteration == 1:
-                            svg_path_att_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_1)[0])                                               
-                        mutant_digit_att, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points, svg_path_att_mth = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), svg_path_att_mth, ext_att, square_size, number_of_points, True, ATTENTION_METHOD) 
+                            svg_path_att_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_1)[0]) 
+                            pred_class_mutant_att = model.predict(digit_reshaped_1) 
+                            fitness_mutant_att = evaluate_ff2(pred_class_mutant_att, LABEL) 
+                            mutant_digit_att =  digit_reshaped_1
+                            pred_input_mutant_att = model.predict_classes(mutant_digit_att) 
+                        #Generating Mutant Candidate                                   
+                        mutant_digit_att_candidate, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points, svg_path_att_mth_candidate = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), svg_path_att_mth, ext_att, square_size, number_of_points, True, ATTENTION_METHOD) 
 
                         #If there is no highest attention point found, it means the digit mutated is close to an invalid digit and we can stop mutating using Attention Method
                         if list_of_svg_points == None: 
@@ -1801,10 +1827,29 @@ def option3():
                         list_of_svg_points_2 = list_of_svg_points 
                         if ATTENTION_METHOD == "mth5":
                             list_of_svg_points = [[point_mutated]]    
-                        shape = mutant_digit_att.shape
-                        pred_input_mutant_att = model.predict_classes(mutant_digit_att)
-                        pred_class_mutant_att = model.predict(mutant_digit_att)
-                        fitness_mutant_att = evaluate_ff2(pred_class_mutant_att, LABEL)
+                        shape = mutant_digit_att_candidate.shape
+                        #Analysing if the candidate is good
+                        pred_input_mutant_att_candidate = model.predict_classes(mutant_digit_att_candidate)
+                        pred_class_mutant_att_candidate = model.predict(mutant_digit_att_candidate)
+                        fitness_mutant_att_candidate = evaluate_ff2(pred_class_mutant_att_candidate, LABEL)                        
+                        if fitness_mutant_att_candidate < fitness_mutant_att:                            
+                            pred_input_mutant_att = pred_input_mutant_att_candidate
+                            pred_class_mutant_att = pred_class_mutant_att_candidate
+                            fitness_mutant_att = fitness_mutant_att_candidate
+                            mutant_digit_att = mutant_digit_att_candidate
+                            svg_path_att_mth = svg_path_att_mth_candidate
+                            # digit_reshaped_1 = mutant_digit_att
+                            if (fitness_mutant_att_candidate < 0.99 * fitness_mutant_att):
+                                ext_att = EXTENT_LOWERBOUND 
+                                number_of_times_fitness_function_does_not_change_att = 0 
+                        else:
+                            number_of_times_fitness_function_does_not_change_att += 1
+                            # print(number_of_times_fitness_function_does_not_change_att)
+                            if number_of_times_fitness_function_does_not_change_att > 10:                                
+                                if (ext_att + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                                    ext_att = ext_att + EXTENT_STEP
+                                # print("Ext_att Doubled", ext_att)
+                                number_of_times_fitness_function_does_not_change_att = 0
                         mutated_points_att_list.append(point_mutated)
                     else:
                         mutated_points_att_list.append("NA")
@@ -1812,22 +1857,36 @@ def option3():
                     # Check if a missclassification was already found for NORMAL Method. If yes, the digit will not be mutated anymore
                     if miss_classification_found_normal == False:
                     # if False or iteration < 2:
-                        pred_class_2 = model.predict(digit_reshaped_2)
-                        fitness_2 = evaluate_ff2(pred_class_2, LABEL)
+                        # pred_class_2 = model.predict(digit_reshaped_2)
+                        # fitness_2_tmp = evaluate_ff2(pred_class_2, LABEL)
+                        # if fitness_2_tmp < fitness_2:
+                        #     fitness_2 = fitness_2_tmp
                         if iteration == 1:
-                            svg_path_normal_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_2)[0]) 
-                        mutant_digit_normal, point_mutated_normal, svg_path_normal_mth = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
-                        pred_input_mutant_normal = model.predict_classes(mutant_digit_normal)
-                        pred_class_mutant_normal = model.predict(mutant_digit_normal)
-                        fitness_mutant_normal = evaluate_ff2(pred_class_mutant_normal, LABEL)
+                            svg_path_normal_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_2)[0])
+                            mutant_digit_normal = digit_reshaped_2
+                            pred_class_mutant_normal = model.predict(digit_reshaped_2)
+                            fitness_mutant_normal = evaluate_ff2(pred_class_mutant_normal, LABEL)
+                            pred_input_mutant_normal = model.predict_classes(mutant_digit_normal)
+                        mutant_digit_normal_candidate, point_mutated_normal, svg_path_normal_mth_candidate = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
+                        pred_input_mutant_normal_candidate = model.predict_classes(mutant_digit_normal)
+                        pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal)
+                        fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal, LABEL)
+                        if fitness_mutant_normal_candidate < fitness_mutant_normal:
+                            pred_input_mutant_normal = pred_input_mutant_normal_candidate
+                            pred_class_mutant_normal = pred_class_mutant_normal_candidate
+                            fitness_mutant_normal = fitness_mutant_normal_candidate
+                            mutant_digit_normal = mutant_digit_normal_candidate
+                            svg_path_normal_mth = svg_path_normal_mth_candidate
                         mutated_points_normal_list.append(point_mutated_normal)
                     else:
                         mutated_points_normal_list.append("NA")
                     
                     #Appending all the data to the list. Necessary to generate the plots of mutations sequentially.
                     iteration_list.append(iteration)
+                    # fitness_function_att.append(fitness_mutant_att)
                     fitness_function_att.append(fitness_mutant_att)
                     prediction_function_att.append(pred_class_mutant_att[0][LABEL])
+                    # fitness_function_normal.append(fitness_mutant_normal)
                     fitness_function_normal.append(fitness_mutant_normal)
                     prediction_function_normal.append(pred_class_mutant_normal[0][LABEL])
                     mutant_digit_att_list.append(mutant_digit_att)
@@ -1880,34 +1939,35 @@ def option3():
                     # if (fitness_mutant_att < fitness_1) or (fitness_mutant_normal < fitness_2):                        
                         
                     # so we can replace the new "original" digit for the mutated one. ATTENTION Method
-                    if (fitness_mutant_att < fitness_1):
-                        if METHOD == "remut":
-                            digit_reshaped_1 = mutant_digit_att
-                        if (fitness_mutant_att < 0.99 * fitness_1):
-                            ext_att = EXTENT
-                            number_of_times_fitness_function_does_not_change_att = 0 
-                    else:
-                        number_of_times_fitness_function_does_not_change_att += 1
-                        # print(number_of_times_fitness_function_does_not_change_att)
-                        if number_of_times_fitness_function_does_not_change_att > 10:                                
-                            ext_att = ext_att * 2
-                            # print("Ext_att Doubled", ext_att)
-                            number_of_times_fitness_function_does_not_change_att = 0
+                    # if (fitness_mutant_att_candidate < fitness_mutant_att):
+                    #     if METHOD == "remut":
+                    #         digit_reshaped_1 = mutant_digit_att
+                    #     if (fitness_mutant_att_candidate < 0.99 * fitness_mutant_att):
+                    #         ext_att = EXTENT_LOWERBOUND 
+                    #         number_of_times_fitness_function_does_not_change_att = 0 
+                    # else:
+                    #     number_of_times_fitness_function_does_not_change_att += 1
+                    #     # print(number_of_times_fitness_function_does_not_change_att)
+                    #     if number_of_times_fitness_function_does_not_change_att > 10:                                
+                    #         if (ext_att + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                    #             ext_att = ext_att + EXTENT_STEP
+                    #         # print("Ext_att Doubled", ext_att)
+                    #         number_of_times_fitness_function_does_not_change_att = 0
                     
                     # so we can replace the new "original" digit for the mutated one. NORMAL Method
-                    if (fitness_mutant_normal < fitness_2):
-                        if METHOD == "remut":
-                            digit_reshaped_2 = mutant_digit_normal
-                        if (fitness_mutant_normal < 0.99 * fitness_2):
-                            ext_normal = EXTENT
-                            number_of_times_fitness_function_does_not_change_normal = 0 
-                    else:
-                        number_of_times_fitness_function_does_not_change_normal += 1
-                        # print(number_of_times_fitness_function_does_not_change_normal)
-                        if number_of_times_fitness_function_does_not_change_normal > 10:                                
-                            ext_normal = ext_normal * 2
-                            # print("Ext_normal Doubled", ext_normal)
-                            number_of_times_fitness_function_does_not_change_normal = 0
+                    # if (fitness_mutant_normal < fitness_2):
+                    #     if METHOD == "remut":
+                    #         digit_reshaped_2 = mutant_digit_normal
+                    #     if (fitness_mutant_normal < 0.99 * fitness_2):
+                    #         ext_normal = EXTENT
+                    #         number_of_times_fitness_function_does_not_change_normal = 0 
+                    # else:
+                    #     number_of_times_fitness_function_does_not_change_normal += 1
+                    #     # print(number_of_times_fitness_function_does_not_change_normal)
+                    #     if number_of_times_fitness_function_does_not_change_normal > 10:                                
+                    #         ext_normal = ext_normal * 2
+                    #         # print("Ext_normal Doubled", ext_normal)
+                    #         number_of_times_fitness_function_does_not_change_normal = 0
 
                 #Will save the history of mutated digits only when at least one of method was able to find a missclassification
                 # if miss_classification_found_att == True or miss_classification_found_normal == True:
