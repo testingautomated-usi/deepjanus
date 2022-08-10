@@ -806,6 +806,24 @@ def apply_mutoperator_attention_distance_mth(input_img, svg_path, extent, square
         return path, list_of_points_close_to_square_attention_patch, xai, original_point, square_att_coordinates, original_svg_points
     else:
         return svg_path, None, xai, None, None, None
+
+def apply_mutoperator_attention_distance_mth_integration(xai_img, svg_path, extent, square_size, number_of_points):
+
+    #Firts Step: Get the list of points (number_of_points) close to the highest attetion area (defined by square_size in pixels.ex: if square_size = 2 -> Area = 2x2 pixels) in the attention image
+    list_of_points_close_to_square_attention_patch = get_svg_points_distance_mth_integration(xai_img, square_size, square_size, svg_path, number_of_points)
+
+    if list_of_points_close_to_square_attention_patch != None:
+        original_point = random.choice(list_of_points_close_to_square_attention_patch)
+        original_coordinate = random.choice(original_point)
+
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+
+
+        mutant_path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+
+        return mutant_path
+    else:
+        return svg_path
         
 
 def AM_get_attetion_svg_points_images_mth1_1(images, x_patch_size, y_patch_size, svg_path):
@@ -881,6 +899,34 @@ def get_svg_points_distance_mth(images, x_patch_size, y_patch_size, svg_path, nu
     # print("Total time mth1: ", total_time) 
     # print("Percentage ((heatmap time)/(total time)) * 100: ", (xai_time/total_time) * 100, "\n") 
     return list_of_ControlPointsCloseToRegion, "(end_time - start_time1)", xai, (x,y), controlPoints
+
+def get_svg_points_distance_mth_integration(xai, x_patch_size, y_patch_size, svg_path, number_of_points):
+    """
+    get_svg_points_distance_mth Iterate all the image looking for the region with more attention and return list of SVG points (tuples) closest from those regions.
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param x_patch_size: X size of the square region
+    :param y_patch_size: Y size of the square region
+    :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
+    :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """ 
+    # start_time1 = time.time()
+    # xai = get_XAI_image(images)
+    # start_time = time.time()
+    # x, y = get_attetion_region(cam, images)
+    # list_of_ControlPointsCloseToRegion = []
+    for i in range(xai.shape[0]):
+        pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+        ControlPoints = pattern.findall(svg_path)
+        controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+        if len(ControlPoints) != 0:
+            x, y = get_attetion_region(xai[i], None, x_patch_size, y_patch_size) #Getting coordinates of the highest attetion region (patch) reference point
+            list_of_ControlPointsCloseToRegion = getControlPointsCloseToRegion(x,y,x_patch_size,y_patch_size, controlPoints, number_of_points) #Getting all the points inside the highest attetion patch
+            # list_of_ControlPointsCloseToRegion.append(ControlPointsCloseToRegion)
+        else:
+            return None
+ 
+    return list_of_ControlPointsCloseToRegion
 
 def getControlPointsCloseToRegion(x,y, x_patch_size, y_patch_size, controlPoints, number_of_points):
 
@@ -1794,7 +1840,7 @@ def option3():
                 iteration = 0
                 svg_path_att_mth = None
                 svg_path_normal_mth = None
-                ext_att = EXTENT
+                ext_att = EXTENT_LOWERBOUND
                 ext_normal = EXTENT
                 number_of_times_fitness_function_does_not_change_att = 0
                 number_of_times_fitness_function_does_not_change_normal = 0
@@ -1832,13 +1878,13 @@ def option3():
                         pred_input_mutant_att_candidate = model.predict_classes(mutant_digit_att_candidate)
                         pred_class_mutant_att_candidate = model.predict(mutant_digit_att_candidate)
                         fitness_mutant_att_candidate = evaluate_ff2(pred_class_mutant_att_candidate, LABEL)                        
-                        if fitness_mutant_att_candidate < fitness_mutant_att:                            
+                        if fitness_mutant_att_candidate <= fitness_mutant_att:                            
                             pred_input_mutant_att = pred_input_mutant_att_candidate
                             pred_class_mutant_att = pred_class_mutant_att_candidate
                             fitness_mutant_att = fitness_mutant_att_candidate
                             mutant_digit_att = mutant_digit_att_candidate
                             svg_path_att_mth = svg_path_att_mth_candidate
-                            # digit_reshaped_1 = mutant_digit_att
+                            digit_reshaped_1 = mutant_digit_att
                             if (fitness_mutant_att_candidate < 0.99 * fitness_mutant_att):
                                 ext_att = EXTENT_LOWERBOUND 
                                 number_of_times_fitness_function_does_not_change_att = 0 
@@ -1868,15 +1914,16 @@ def option3():
                             fitness_mutant_normal = evaluate_ff2(pred_class_mutant_normal, LABEL)
                             pred_input_mutant_normal = model.predict_classes(mutant_digit_normal)
                         mutant_digit_normal_candidate, point_mutated_normal, svg_path_normal_mth_candidate = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
-                        pred_input_mutant_normal_candidate = model.predict_classes(mutant_digit_normal)
-                        pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal)
-                        fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal, LABEL)
-                        if fitness_mutant_normal_candidate < fitness_mutant_normal:
+                        pred_input_mutant_normal_candidate = model.predict_classes(mutant_digit_normal_candidate)
+                        pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal_candidate)
+                        fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal_candidate, LABEL)
+                        if fitness_mutant_normal_candidate <= fitness_mutant_normal:
                             pred_input_mutant_normal = pred_input_mutant_normal_candidate
                             pred_class_mutant_normal = pred_class_mutant_normal_candidate
                             fitness_mutant_normal = fitness_mutant_normal_candidate
                             mutant_digit_normal = mutant_digit_normal_candidate
                             svg_path_normal_mth = svg_path_normal_mth_candidate
+                            digit_reshaped_2 = mutant_digit_normal
                         mutated_points_normal_list.append(point_mutated_normal)
                     else:
                         mutated_points_normal_list.append("NA")
@@ -2105,10 +2152,55 @@ def option4():
     ax.set_title('Performance Analysis')
     plt.savefig("./xai/time_analysis.jpg")
 
+def option5():
+    mnist = keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    x_test = x_test[0:10]
+    for i in range(x_test.shape[0]):
+        print(i)
+        images = x_test[i].reshape(1,28,28)
+        print("images.shape", images.shape)
+        xai_images = get_XAI_image(images)
+        print("xai_images.shape", xai_images.shape)
+
+        extent = 10
+        square_size = 2
+        number_of_points = 2
+        svg_path = get_svg_path(images[0]) 
+        mutant_vector = apply_mutoperator_attention_distance_mth_integration(xai_images, svg_path, extent, square_size, number_of_points)
+        mutant_vector_rasterized = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutant_vector))
+
+        fig = plt.figure(figsize=(9,10))
+        gs = gridspec.GridSpec(nrows=1,ncols=3, width_ratios=[1,1,1], height_ratios=[1])        
+        # ax0.set_title("Normal Mutation/Pred = " + str(pred_normal_list[img_index]), color="red")
+
+        ax0 = fig.add_subplot(gs[0,0])
+        ax0.imshow(images.reshape(28,28), cmap = "gray")
+        ax0.set_title("Original Digit")
+
+        ax1 = fig.add_subplot(gs[0,1])
+        ax1.imshow(mutant_vector_rasterized.reshape(28, 28), cmap = "gray")
+        ax1.set_title("Mutated Digit")
+
+        ax2 = fig.add_subplot(gs[0,2])
+        ax2.imshow(xai_images[0], cmap = "jet")
+        ax2.set_title("Attention Image")
+
+        plt.tight_layout()
+        plt.savefig("test_" + str(i))
+        # plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]) + "_ext_att=" + str(ext_att_list[img_index]) + "_ext_normal=" + str(ext_normal_list[img_index]))
+        plt.cla()
+        plt.close(fig)
+
+
+
+
 if __name__ == "__main__":
-    OPTION = 3
+    OPTION = 5
     if OPTION == 3:
         option3()
+    elif OPTION == 5:
+        option5()
 
 
 
