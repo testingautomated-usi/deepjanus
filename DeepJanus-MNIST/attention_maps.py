@@ -79,7 +79,7 @@ elif Attention_Technique == "Gradcam++":
 #                     model_modifier=replace2linear,
 #                     clone=True)
 
-def input_reshape_images(x):
+def input_reshape_and_normalize_images(x):
     # shape numpy vectors
     if keras.backend.image_data_format() == 'channels_first':
         x_reshape = x.reshape(x.shape[0], 1, 28, 28)
@@ -138,7 +138,7 @@ def AM_darken_attention_pixels_mth1(images, x_patch_size, y_patch_size, svg_path
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     # start_time1 = time.time()
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
@@ -208,7 +208,7 @@ def AM_darken_attention_pixels_mth2(images, x_patch_size, y_patch_size, svg_path
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     # start_time1 = time.time()
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
@@ -460,9 +460,9 @@ def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
     return [new_list]
 
 
-def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
+def compute_attention_maps(images):# images should have the shape: (x, 28, 28) where x>=1
     # start_time = time.time()
-    images_reshaped = input_reshape_images(images)
+    images_reshaped = input_reshape_and_normalize_images(images)
 
     X = preprocess_input(images_reshaped, mode = "tf")
 
@@ -482,7 +482,10 @@ def get_XAI_image(images):# images should have the shape: (x, 28, 28) where x>=1
         cam = gradcam(score,
                     X,
                     penultimate_layer=-1)
-
+    else:
+        print("Choose a valid attention technique")
+        cam = None
+        exit()
     # elif Attention_Technique == "Gradcam":
     #     # Generate heatmap with GradCAM
     #     cam = gradcam(score,
@@ -517,7 +520,7 @@ def AM_get_attetion_svg_points_image(image, x_patch_size, y_patch_size, model): 
     """
     images = image.reshape(1, 28, 28)
 
-    xai = get_XAI_image(images, model)
+    xai = compute_attention_maps(images, model)
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
     ControlPoints = vectorization_tools.getImageControlPoints(images[0])
@@ -538,7 +541,7 @@ def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, s
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     # start_time1 = time.time()
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
@@ -592,7 +595,7 @@ def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
     :param model: The model object that will predict the value of the digit in the image 
     :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
-    xai = get_XAI_image(images, model)
+    xai = compute_attention_maps(images, model)
     start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_points_and_weights = []
@@ -645,7 +648,7 @@ def AM_get_attetion_svg_points_images_mth2(images, sqr_size, svg_path):
     :param svg_path: A string with the digit's SVG path description. Ex: "M .... C .... Z".
     :return: The point with more score attention around it. Tuple - One single point. Ex: (x,y)
     """ 
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
 
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsInsideRegion = []
@@ -671,7 +674,7 @@ def AM_get_attetion_svg_points_images_mth5(images, number_of_points, svg_path):
     :return: A list of n points (number_of_points) with more score attention around it. List of tuples Ex: (x,y)
     """ 
     # start_time1= time.time() 
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time() 
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsInsideRegion = []
@@ -706,7 +709,7 @@ def AM_get_attetion_svg_points_images_mth6(images, number_of_points, svg_path):
     :return: A list of n points (number_of_points) with more score attention around it. List of tuples Ex: (x,y)
     """ 
     # start_time1= time.time() 
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time() 
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsInsideRegion = []
@@ -807,23 +810,23 @@ def apply_mutoperator_attention_distance_mth(input_img, svg_path, extent, square
     else:
         return svg_path, None, xai, None, None, None
 
-def apply_mutoperator_attention_distance_mth_integration(xai_img, svg_path, extent, square_size, number_of_points):
+def mutate_attention(attention_map, svg_desc, mutation_extent, square_size = 2, number_of_points = 2):
 
     #Firts Step: Get the list of points (number_of_points) close to the highest attetion area (defined by square_size in pixels.ex: if square_size = 2 -> Area = 2x2 pixels) in the attention image
-    list_of_points_close_to_square_attention_patch = get_svg_points_distance_mth_integration(xai_img, square_size, square_size, svg_path, number_of_points)
+    list_of_points_close_to_square_attention_patch = get_svg_points_distance_mth_integration(attention_map, square_size, square_size, svg_desc, number_of_points)
 
     if list_of_points_close_to_square_attention_patch != None:
         original_point = random.choice(list_of_points_close_to_square_attention_patch)
         original_coordinate = random.choice(original_point)
 
-        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, mutation_extent)
 
 
-        mutant_path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+        mutant_path = svg_desc.replace(str(original_coordinate), str(mutated_coordinate))
 
         return mutant_path
     else:
-        return svg_path
+        return svg_desc
         
 
 def AM_get_attetion_svg_points_images_mth1_1(images, x_patch_size, y_patch_size, svg_path):
@@ -837,7 +840,7 @@ def AM_get_attetion_svg_points_images_mth1_1(images, x_patch_size, y_patch_size,
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     # start_time1 = time.time()
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     list_of_ControlPointsInsideRegion = []
@@ -874,7 +877,7 @@ def get_svg_points_distance_mth(images, x_patch_size, y_patch_size, svg_path, nu
     :return: A list of point positions that are inside the region found. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
     # start_time1 = time.time()
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time()
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsCloseToRegion = []
@@ -1091,7 +1094,7 @@ def AM_get_attetion_svg_points_images_v1(images, number_of_points, svg_path, sqr
     :return: A list of n points (number_of_points) with more score attention around it. List of tuples Ex: (x,y)
     """ 
     # start_time1= time.time() 
-    xai = get_XAI_image(images)
+    xai = compute_attention_maps(images)
     # start_time = time.time() 
     # x, y = get_attetion_region(cam, images)
     # list_of_ControlPointsInsideRegion = []
@@ -1548,7 +1551,7 @@ def option1():
                 mutante_digit_path = apply_mutoperator1(image, get_svg_path(image[0]), extent)
             rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))    
             prediction = model.predict_classes(input_reshape_images_reverse_orig(rast_nparray))
-            prediction_mnist_data = model.predict_classes(input_reshape_images(image))
+            prediction_mnist_data = model.predict_classes(input_reshape_and_normalize_images(image))
             print("PM: ",str(prediction[0]), " PO:", str(prediction_mnist_data[0]), "Label: ", str(label))        
             if prediction!= prediction_mnist_data:
             # if True:
@@ -1619,10 +1622,10 @@ def option2():
                     # print("original_digit shape", original_digit.shape)
                     # print("original_digit max", original_digit.max())
                     # print("original_digit min", original_digit.min())
-                    xai = get_XAI_image(original_digit)
+                    xai = compute_attention_maps(original_digit)
                     iteration = 0
-                    pred_input_mutant = model.predict_classes(input_reshape_images(digit))
-                    digit_reshaped = input_reshape_images(digit)
+                    pred_input_mutant = model.predict_classes(input_reshape_and_normalize_images(digit))
+                    digit_reshaped = input_reshape_and_normalize_images(digit)
                     iteration_list = []
                     fitness_function = []
                     prediction_function = []
@@ -1636,7 +1639,7 @@ def option2():
                         # print("digit min", digit_reshaped.min())
                         pred_input = model.predict_classes(digit_reshaped)
                         # print("pred_input", pred_input)
-                        pred_class = model.predict(input_reshape_images(digit))
+                        pred_class = model.predict(input_reshape_and_normalize_images(digit))
                         # print("pred_class", pred_class)
                         fitness = evaluate_ff2(pred_class, LABEL)
                         # print("fitness", fitness)
@@ -1686,7 +1689,7 @@ def option2():
                                 if METHOD == "remut":
                                     digit_reshaped = mutant_digit
 
-def option3():
+def Comparison_Script_Attention_vs_Normal_Mutation():
 
     from config import MUTANTS_ROOT_FOLDER,\
         METHOD_LIST,\
@@ -1808,8 +1811,8 @@ def option3():
                 np.random.seed(seed)
                 print("Seed: ", seed)
                 print("Repetition", REPETITION)
-                digit_reshaped_1 = input_reshape_images(digit_1)
-                digit_reshaped_2 = input_reshape_images(digit_2)
+                digit_reshaped_1 = input_reshape_and_normalize_images(digit_1)
+                digit_reshaped_2 = input_reshape_and_normalize_images(digit_2)
                 iteration_list = []
                 fitness_function_att = []
                 prediction_function_att = []
@@ -2116,7 +2119,7 @@ def option4():
         images = x_test[:n]
         #Batch Method    
         start_time = time.time()
-        cams = get_XAI_image(images)
+        cams = compute_attention_maps(images)
         end_time = time.time()
         delta_time_batch = (end_time - start_time)
         time_list_batch.append(delta_time_batch)
@@ -2125,7 +2128,7 @@ def option4():
         #Sequential Method
         start_time = time.time()
         for image_index in range(images.shape[0]):
-            cam = get_XAI_image(images[image_index].reshape(1,28,28))
+            cam = compute_attention_maps(images[image_index].reshape(1,28,28))
             # plt.imshow(cams[image_index])
             # plt.imshow(images[image_index])
             # plt.savefig("./xai/cam_orig_"+str(image_index)+".jpg")
@@ -2152,30 +2155,48 @@ def option4():
     ax.set_title('Performance Analysis')
     plt.savefig("./xai/time_analysis.jpg")
 
-def option5():
+def how_to_use_Vincenzo_fuctions():
+    extent = 10
+    square_size = 2
+    number_of_points = 2
+
     mnist = keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    x_test = x_test[0:10]
-    for i in range(x_test.shape[0]):
+    '''
+    [1] attention_maps = compute_attention_maps(imgs)
+    imgs is an array/list containing bitmap images, please tell me what format they should have
+    activation_maps is an array/list containing all the attention maps, the order in the members of imgs and activation maps should be preserved, so no shuffling here
+    I will integrate this code in this function: https://github.com/testingautomated-usi/deepjanus/blob/master/DeepJanus-MNIST/main.py#L114
+    '''
+    images = x_test[0:10]
+    print("images.shape", images.shape)
+    attention_maps = compute_attention_maps(images) 
+    print("xai_images.shape", attention_maps.shape)
+    
+    for i in range(attention_maps.shape[0]):
         print(i)
-        images = x_test[i].reshape(1,28,28)
-        print("images.shape", images.shape)
-        xai_images = get_XAI_image(images)
-        print("xai_images.shape", xai_images.shape)
 
-        extent = 10
-        square_size = 2
-        number_of_points = 2
-        svg_path = get_svg_path(images[0]) 
-        mutant_vector = apply_mutoperator_attention_distance_mth_integration(xai_images, svg_path, extent, square_size, number_of_points)
+        '''
+        [2] mutant_vector = mutate_attention (svg_desc, mutation_extent, attention_map, count)
+        svg_desc is the output of https://github.com/testingautomated-usi/deepjanus/blob/master/DeepJanus-MNIST/vectorization_tools.py#L33
+        attention map is the output of compute_attention_maps, that you have developed
+        the mutation extent is determined by your adaptive strategy, ideally you are in a while loop like the one in the DJ digit mutator here until the distance between the original and the mutant is different than zero: https://github.com/testingautomated-usi/deepjanus/blob/master/DeepJanus-MNIST/digit_mutator.py#L16
+        the mutation_extent is the extent we define with the adaptive strategy
+        '''
+        
+        svg_path = get_svg_path(images[i].reshape(28,28)) 
+        mutant_vector = mutate_attention(attention_map = attention_maps[i].reshape(1,28,28), svg_desc = svg_path, mutation_extent = extent)
+
         mutant_vector_rasterized = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutant_vector))
 
+
+        #Plotting the images
         fig = plt.figure(figsize=(9,10))
         gs = gridspec.GridSpec(nrows=1,ncols=3, width_ratios=[1,1,1], height_ratios=[1])        
         # ax0.set_title("Normal Mutation/Pred = " + str(pred_normal_list[img_index]), color="red")
 
         ax0 = fig.add_subplot(gs[0,0])
-        ax0.imshow(images.reshape(28,28), cmap = "gray")
+        ax0.imshow(images[i].reshape(28,28), cmap = "gray")
         ax0.set_title("Original Digit")
 
         ax1 = fig.add_subplot(gs[0,1])
@@ -2183,8 +2204,8 @@ def option5():
         ax1.set_title("Mutated Digit")
 
         ax2 = fig.add_subplot(gs[0,2])
-        ax2.imshow(xai_images[0], cmap = "jet")
-        ax2.set_title("Attention Image")
+        ax2.imshow(attention_maps[i], cmap = "jet")
+        ax2.set_title("Attention Map")
 
         plt.tight_layout()
         plt.savefig("test_" + str(i))
@@ -2198,9 +2219,9 @@ def option5():
 if __name__ == "__main__":
     OPTION = 5
     if OPTION == 3:
-        option3()
+        Comparison_Script_Attention_vs_Normal_Mutation()
     elif OPTION == 5:
-        option5()
+        how_to_use_Vincenzo_fuctions()
 
 
 
