@@ -1709,7 +1709,9 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
         SAVE_STATS4_CSV,\
         EXTENT_STEP,\
         EXTENT_LOWERBOUND,\
-        EXTENT_UPPERBOUND 
+        EXTENT_UPPERBOUND ,\
+        START_SEED,\
+        DEBUG_OR_VALID
 
     random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
@@ -1728,8 +1730,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
     number_of_mutations = NUMBER_OF_MUTATIONS
     number_of_repetitions = NUMBER_OF_REPETITIONS
     
-    random.seed(0)
-    np.random.seed(0)
+    random.seed(START_SEED)
+    np.random.seed(START_SEED)
            
     images, labels, indices_choosen = initializate_list_of_images(x_test, y_test, NUMBER_OF_DIGIT_SAMPLES)
 
@@ -1742,7 +1744,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
 
     # Creating CSVs in the MUTANTS_ROOT_FOLDER
     run_id = str(Timer.start.strftime('%s')) 
-    DST = MUTANTS_ROOT_FOLDER + "debug_" + ATTENTION_METHOD + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_MutType=" + METHOD_LIST[0] + "_ID=" + run_id
+    DST = MUTANTS_ROOT_FOLDER + DEBUG_OR_VALID + "_ISEED=" + str(START_SEED) + "_NDS=" + str(NUMBER_OF_DIGIT_SAMPLES) + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_MutType=" + METHOD_LIST[0] + "_ID=" + run_id
     makedirs(DST)
     csv_path = DST + "/stats.csv"
     if os.path.exists(csv_path):
@@ -1880,17 +1882,20 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
                         #Analysing if the candidate is good
                         pred_input_mutant_att_candidate = model.predict_classes(mutant_digit_att_candidate)
                         pred_class_mutant_att_candidate = model.predict(mutant_digit_att_candidate)
-                        fitness_mutant_att_candidate = evaluate_ff2(pred_class_mutant_att_candidate, LABEL)                        
-                        if fitness_mutant_att_candidate <= fitness_mutant_att:                            
+                        fitness_mutant_att_candidate = evaluate_ff2(pred_class_mutant_att_candidate, LABEL)                                       
+                        if fitness_mutant_att_candidate <= fitness_mutant_att:
+                            # print(fitness_mutant_att)                 
+                            # print(fitness_mutant_att_candidate) 
+                            if (fitness_mutant_att_candidate < (0.99 * fitness_mutant_att)):
+                                print("RESETING ext_att")
+                                ext_att = EXTENT_LOWERBOUND 
+                                number_of_times_fitness_function_does_not_change_att = 0                            
                             pred_input_mutant_att = pred_input_mutant_att_candidate
                             pred_class_mutant_att = pred_class_mutant_att_candidate
                             fitness_mutant_att = fitness_mutant_att_candidate
                             mutant_digit_att = mutant_digit_att_candidate
                             svg_path_att_mth = svg_path_att_mth_candidate
                             digit_reshaped_1 = mutant_digit_att
-                            if (fitness_mutant_att_candidate < 0.99 * fitness_mutant_att):
-                                ext_att = EXTENT_LOWERBOUND 
-                                number_of_times_fitness_function_does_not_change_att = 0 
                         else:
                             number_of_times_fitness_function_does_not_change_att += 1
                             # print(number_of_times_fitness_function_does_not_change_att)
@@ -2156,9 +2161,14 @@ def option4():
     plt.savefig("./xai/time_analysis.jpg")
 
 def how_to_use_Vincenzo_fuctions():
+
+    random.seed(1)
+    np.random.seed(1)
     extent = 10
     square_size = 2
     number_of_points = 2
+
+    model = keras.models.load_model(MODEL)
 
     mnist = keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -2170,6 +2180,7 @@ def how_to_use_Vincenzo_fuctions():
     '''
     images = x_test[0:10]
     print("images.shape", images.shape)
+    #Compute_attention_maps accepts NON-Normalized images (MAX = 255) with shape: (N, 28, 28) where N:Number Of Images >= 1
     attention_maps = compute_attention_maps(images) 
     print("xai_images.shape", attention_maps.shape)
     
@@ -2183,13 +2194,32 @@ def how_to_use_Vincenzo_fuctions():
         the mutation extent is determined by your adaptive strategy, ideally you are in a while loop like the one in the DJ digit mutator here until the distance between the original and the mutant is different than zero: https://github.com/testingautomated-usi/deepjanus/blob/master/DeepJanus-MNIST/digit_mutator.py#L16
         the mutation_extent is the extent we define with the adaptive strategy
         '''
-        
-        svg_path = get_svg_path(images[i].reshape(28,28)) 
-        mutant_vector = mutate_attention(attention_map = attention_maps[i].reshape(1,28,28), svg_desc = svg_path, mutation_extent = extent)
+        image = images[i].reshape(1,28,28)
+        digit_reshaped_and_normalized = input_reshape_and_normalize_images(image)
+        svg_path_att_mth = get_svg_path(images[i].reshape(28,28))
+        #generate_mutant accepts NON-Normalized images (MAX = 255)
+        mutant_vector_rasterized, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points, svg_path_att_mth_candidate = generate_mutant(image, svg_path_att_mth, extent, square_size, number_of_points, True, "distances")  
 
-        mutant_vector_rasterized = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutant_vector))
+        # svg_path = get_svg_path(images[i].reshape(28,28))
+        ##mutate_attention 
+        # mutant_vector = mutate_attention(attention_map = attention_maps[i].reshape(1,28,28), svg_desc = svg_path, mutation_extent = extent)      
+        # mutant_vector_rasterized = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutant_vector))
 
+        print("Image\n")
+        print("Max ", np.amax(image))
+        print("Min ", np.amin(image))
+        # pred_input_mutant_att_candidate = model.predict_classes(image)
+        # pred_class_mutant_att_candidate = model.predict(image)
+        # print("pred_input_mutant_att_candidate", pred_input_mutant_att_candidate)
+        # print("pred_class_mutant_att_candidate", pred_class_mutant_att_candidate)
 
+        print("Digit Reshaped\n")
+        print("Max ", np.amax(digit_reshaped_and_normalized))
+        print("Min ", np.amin(digit_reshaped_and_normalized))
+        pred_input_mutant_att_candidate = model.predict_classes(digit_reshaped_and_normalized) #Predict and Predict_classes only accept NORMALIZED images with shape: (N, 28, 28, 1) where N:Number Of Images >= 1
+        pred_class_mutant_att_candidate = model.predict(digit_reshaped_and_normalized) #Predict and Predict_classes only accept images NORMALIZED with shape: (N, 28, 28, 1) where N:Number Of Images >= 1
+        print("pred_input_mutant_att_candidate", pred_input_mutant_att_candidate)
+        print("pred_class_mutant_att_candidate", pred_class_mutant_att_candidate)
         #Plotting the images
         fig = plt.figure(figsize=(9,10))
         gs = gridspec.GridSpec(nrows=1,ncols=3, width_ratios=[1,1,1], height_ratios=[1])        
@@ -2208,7 +2238,7 @@ def how_to_use_Vincenzo_fuctions():
         ax2.set_title("Attention Map")
 
         plt.tight_layout()
-        plt.savefig("test_" + str(i))
+        plt.savefig("test_" + str(i) + "_" + str(i) + "_" + str(i) + "_" + str(i))
         # plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]) + "_ext_att=" + str(ext_att_list[img_index]) + "_ext_normal=" + str(ext_normal_list[img_index]))
         plt.cla()
         plt.close(fig)
@@ -2217,7 +2247,7 @@ def how_to_use_Vincenzo_fuctions():
 
 
 if __name__ == "__main__":
-    OPTION = 5
+    OPTION = 3
     if OPTION == 3:
         Comparison_Script_Attention_vs_Normal_Mutation()
     elif OPTION == 5:
