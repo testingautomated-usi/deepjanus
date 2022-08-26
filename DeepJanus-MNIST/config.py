@@ -61,9 +61,10 @@ METHOD_LIST = ["remut"]
 # METHOD_LIST = ["NOremut"]
 # ATTENTION_METHOD = "mth5"
 # ATTENTION_METHOD = "mth1"
+#Mutations CONFIG
+
 ATTENTION_METHOD = "distances"
 SAVE_IMAGES = True
-N = 54 #Nummber of Images to take from dataset
 START_INDEX_DATASET = 0
 EXTENT = 0.1
 EXTENT_STEP = 0.05
@@ -73,14 +74,26 @@ NUMBER_OF_POINTS = 2
 SQUARE_SIZE = 2
 NUMBER_OF_MUTATIONS = 1000
 NUMBER_OF_REPETITIONS = 5
+SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS = [4398, 980, 987423, 99982, 1123, 4098, 1946, 22601, 55037, 812109, 53898, 187988]
+
+#Adaptive number of Mutations CONFIG
+FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS = 0.8 #The script will add more mutations if the Fitness is less than the THRESHOLD
+EXTRA_MUTATIONS = 1000 #Number of mutations to be added
+
+#Init Data Set CONFIG
 RANDOM_SEED = 1
 SHUFFLE_IMAGES = False
 NUMBER_OF_DIGIT_SAMPLES = 5 #Number of samples of a same digit that will be mutated in the experiment
-SEEDS_LIST = [4398, 980, 987423, 99982, 1123, 4098, 1946, 22601, 55037, 812109, 53898, 187988]
+N = 10 * NUMBER_OF_DIGIT_SAMPLES #Nummber of total Images to take from MNIST dataset
+
 START_SEED = 1
 DEBUG_OR_VALID = "VALID"
 # RUNNING_OPTION = "ATT_vs_NOR"
 RUNNING_OPTION = "ATT_vs_ATT+ADP_vs_NOR"
 # RUNNING_OPTION = "VINCENZO_FUNCTIONS_DEMO"
+
+#Specify the MNIST images (by the indexes) to reproduce results. If None, the list of images to be tested will be initialized randomly based on START_SEED.
+RUN_MNIST_SPECIFIC_INDEXES = [1439, 7750, 8880, 5518, 6546, 7616, 7979, 7329, 4445, 9439, 7403, 5509, 90, 7483, 4650, 4498, 8256, 9792, 5067, 2660]
+# RUN_MNIST_SPECIFIC_INDEXES = None #Specify the MNIST images (by the indexes) to reproduce results. If None, the list of images to be tested will be initialized randomly based on START_SEED.
 
 SAVE_STATS4_CSV = False #Option to print the location of the points mutated at each iteration

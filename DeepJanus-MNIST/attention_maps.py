@@ -53,6 +53,9 @@ import glob
 import csv
 import os
 
+from datetime import datetime
+import pytz
+
 score = CategoricalScore(0)
 replace2linear = ReplaceToLinear()
 
@@ -1698,11 +1701,11 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             plt.cla()
             plt.close(fig)
 
-def create_folder(mutant_root_folder, number_of_mutations, repetition, ext_att, ext_normal, label, image_index, method, attention, run_id, seed):
+def create_folder(mutant_root_folder, number_of_mutations, repetition, ext_att, ext_normal, label, image_index, method, attention, run_id, seed, mnist_index):
     # run_id_2 = str(Timer.start.strftime('%s'))
     # DST = "mutants/debug/debug_"+ Mth1_str + run_id +"/NM="+ str(number_of_mutations) + "_REP=" + str(repetition) + "_ext="+str(extent)+"_lbl="+str(label)+"_IMG_INDEX="+str(image_index)+"_mth="+method+"_ATT="+str(attention)#+"_run_"+str(run_id_2)
     # DST = mutant_root_folder +"/NM="+ str(number_of_mutations) + "_REP=" + str(repetition) + "_ext="+str(extent)+"_lbl="+str(label)+"_IMG_INDEX="+str(image_index)+"_mth="+method+"_ATT="+str(attention)#+"_run_"+str(run_id_2)
-    DST = mutant_root_folder + "/IMG_INDEX="+str(image_index) + "_Seed=" + str(seed) + "_REP=" + str(repetition) + "_lbl="+str(label)
+    DST = mutant_root_folder + "/IMG="+str(image_index) + "_INDEX=" + str(mnist_index) + "_Seed=" + str(seed) + "_REP=" + str(repetition) + "_lbl="+str(label)
     # DST = mutant_root_folder + "/IMG_INDEX="+str(image_index) + "_Seed=" + str(seed) + "_REP=" + str(repetition) + "_lbl="+str(label) + "_ext_att=" + str(ext_att) + "_ext_normal=" + str(ext_normal)
     if not exists(DST):
         makedirs(DST)
@@ -1733,18 +1736,29 @@ def normalize_2d(matrix):
     matrix = matrix/norm  # normalized matrix
     return matrix
 
-def initializate_list_of_images(images, labels, number_of_samples):
-    list_of_indices = []
-    for i in range(number_of_samples):
-        for label in reversed(range(0, 10)):        
-            indices = np.where(labels == label)
-            indice = random.choice(indices[0])
-            list_of_indices.append(indice)
+def initializate_list_of_images(images, labels, number_of_samples, specific_idexes = None):
+    if specific_idexes == None:
+        list_of_indices = []
+        for i in range(number_of_samples):
+            for label in reversed(range(0, 10)):        
+                indices = np.where(labels == label)
+                indice = random.choice(indices[0])
+                list_of_indices.append(indice)
 
-    print(list_of_indices)
-    print(labels[list_of_indices])
+        print("list_of_indices randomly chosen: ", list_of_indices)
+        print("Respective Labels: ", labels[list_of_indices])
 
-    return images[list_of_indices], labels[list_of_indices], list_of_indices
+        return images[list_of_indices], labels[list_of_indices], list_of_indices
+    else:
+        if isinstance(specific_idexes, str):
+            specific_idexes = int(specific_idexes)
+        if isinstance(specific_idexes, int):
+            list_of_indices = [specific_idexes]
+        else:
+            list_of_indices = specific_idexes
+        print("list_of_indices randomly chosen: ", list_of_indices)
+        print("Respective Labels: ", labels[list_of_indices])
+        return images[list_of_indices], labels[list_of_indices], list_of_indices
 
 
 def option1():
@@ -1931,7 +1945,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
         SHUFFLE_IMAGES,\
         START_INDEX_DATASET,\
         NUMBER_OF_DIGIT_SAMPLES,\
-        SEEDS_LIST,\
+        SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS,\
         SAVE_STATS4_CSV,\
         EXTENT_STEP,\
         EXTENT_LOWERBOUND,\
@@ -2033,12 +2047,12 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
             
             iterations_detection_normal_list = []
             iterations_detection_att_list = []
-            for REPETITION in range(1,number_of_repetitions + 1):
-                seed = SEEDS_LIST[REPETITION - 1]
+            for repetition in range(1,number_of_repetitions + 1):
+                seed = SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS[repetition - 1]
                 random.seed(seed)
                 np.random.seed(seed)
                 print("Seed: ", seed)
-                print("Repetition", REPETITION)
+                print("Repetition", repetition)
                 digit_reshaped_1 = input_reshape_and_normalize_images(digit_1)
                 digit_reshaped_2 = input_reshape_and_normalize_images(digit_2)
                 iteration_list = []
@@ -2256,7 +2270,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
                 #If True -> Will save the history of mutated digits indenpendently whether it found a miss classification or not
                 if True:
                     if SAVE_IMAGES == True and list_of_svg_points != None:
-                        folder_path = create_folder(DST, number_of_mutations, REPETITION, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed) 
+                        folder_path = create_folder(DST, number_of_mutations, repetition, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed, indices_choosen[image_index])  
                         # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
                         save_images(mutant_digit_normal_list, mutant_digit_att_list, xai_images_list, list_of_svg_points_list, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, original_svg_points_list, mutated_points_att_list_numeric, ext_att_list, ext_normal_list)
                         make_gif(folder_path, folder_path + "/gif")
@@ -2267,7 +2281,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation():
                     #method_winner -> Which method took less iterations to find a missclassification
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
-                        writer.writerow([image_index, LABEL, REPETITION, seed, iterations_detection_att, iterations_detection_normal, method_winner])
+                        writer.writerow([image_index, LABEL, repetition, seed, iterations_detection_att, iterations_detection_normal, method_winner])
                     
                     if SAVE_STATS4_CSV == True:
                         #Writing the points mutated to the .csv 
@@ -2468,6 +2482,23 @@ def how_to_use_Vincenzo_fuctions():
         # plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]) + "_ext_att=" + str(ext_att_list[img_index]) + "_ext_normal=" + str(ext_normal_list[img_index]))
         plt.cla()
         plt.close(fig)
+def get_diff_time_string(diff_time):
+    diff = int(diff_time)
+    hours = diff // 3600
+    mins = (diff - 3600*hours) // 60
+    secs = diff - 3600*hours - 60*mins
+    print(hours, mins, secs)
+    total_duration_string = "Total run duration: " + \
+        (str(hours) + "hr : " if hours > 0 else "") + \
+        (str(mins) + "min : " if mins >= 0 else "") + \
+        (str(secs) + "sec" if secs >= 0 else "")
+    return total_duration_string
+def get_current_time_string():
+    tz_BRAZIL = pytz.timezone('America/Recife')
+    now = datetime.now(tz_BRAZIL)
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+
+    return dt_string
 
 def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
 
@@ -2485,13 +2516,16 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
         SHUFFLE_IMAGES,\
         START_INDEX_DATASET,\
         NUMBER_OF_DIGIT_SAMPLES,\
-        SEEDS_LIST,\
+        SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS,\
         SAVE_STATS4_CSV,\
         EXTENT_STEP,\
         EXTENT_LOWERBOUND,\
         EXTENT_UPPERBOUND ,\
         START_SEED,\
-        DEBUG_OR_VALID
+        DEBUG_OR_VALID, \
+        FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS, \
+        RUN_MNIST_SPECIFIC_INDEXES, \
+        EXTRA_MUTATIONS
 
     random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
@@ -2513,7 +2547,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
     random.seed(START_SEED)
     np.random.seed(START_SEED)
            
-    images, labels, indices_choosen = initializate_list_of_images(x_test, y_test, NUMBER_OF_DIGIT_SAMPLES)
+    images, labels, indices_choosen = initializate_list_of_images(x_test, y_test, NUMBER_OF_DIGIT_SAMPLES, RUN_MNIST_SPECIFIC_INDEXES)
+
 
     if SHUFFLE_IMAGES == True:
         indices = np.arange(images.shape[0])
@@ -2526,6 +2561,17 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
     run_id = str(Timer.start.strftime('%s')) 
     DST = MUTANTS_ROOT_FOLDER + DEBUG_OR_VALID + "_ISEED=" + str(START_SEED) + "_NDS=" + str(NUMBER_OF_DIGIT_SAMPLES) + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_MutType=" + METHOD_LIST[0] + "_ID=" + run_id
     makedirs(DST)
+    start_time = time.time()
+    dt_string = get_current_time_string()
+    run_info_file = DST + "/INFO.txt"
+    lines = ["Start Time: " + dt_string , \
+        "Start SEED: " + str(START_SEED), \
+        "list_of_indices chosen: " + str(indices_choosen), \
+        "Respective Labels: " + str(labels)]
+    with open(run_info_file, 'w') as f:
+        for line in lines:
+            f.write(line)
+            f.write('\n')
     csv_path = DST + "/stats.csv"
     if os.path.exists(csv_path):
         append_write = 'a'  # append if already exists
@@ -2566,8 +2612,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
         with open(csv_path_4, append_write) as f1:
             writer = csv.writer(f1)
             writer.writerow(["Iteration", "Point Mutated Att","Point Mutated Normal", "List of points to be mutated Att"])
-
-    start_time = time.time() 
+ 
     iterations_mean_att_list = [] 
     iterations_mean_normal_list = []
     iterations_mean_att_adaptive_list = []     
@@ -2591,22 +2636,22 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
             iterations_detection_normal_list = []
             iterations_detection_att_list = []
             iterations_detection_att_adaptive_list = []
-            for REPETITION in range(1,number_of_repetitions + 1):
-                seed = SEEDS_LIST[REPETITION - 1]
+            for repetition in range(1,number_of_repetitions + 1):
+                seed = SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS[repetition - 1]
                 random.seed(seed)
                 np.random.seed(seed)
                 print("Seed: ", seed)
-                print("Repetition", REPETITION)
+                print("Repetition", repetition)
                 digit_reshaped_1 = input_reshape_and_normalize_images(digit_1)
                 digit_reshaped_2 = input_reshape_and_normalize_images(digit_2)
                 digit_reshaped_3 = input_reshape_and_normalize_images(digit_3)
                 iteration_list = []
-                fitness_function_att = []
-                prediction_function_att = []
-                fitness_function_att_adaptive = []
-                prediction_function_att_adaptive = []
-                fitness_function_normal = []
-                prediction_function_normal = []
+                fitness_function_att_list = []
+                prediction_function_att_list = []
+                fitness_function_att_adaptive_list = []
+                prediction_function_att_adaptive_list = []
+                fitness_function_normal_list = []
+                prediction_function_normal_list = []
                 mutant_digit_att_list = []
                 mutant_digit_att_adaptive_list = []
                 mutant_digit_normal_list =[]
@@ -2653,7 +2698,16 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                 # fitness_1 = 1
                 # fitness_2 = 1
                 # fitness_mutant_att = 1
-                while (iteration < number_of_mutations):
+                number_of_mutations_adaptive = number_of_mutations
+                adaptive_mutation_already_applied = False
+                while (iteration < number_of_mutations_adaptive):
+                    if iteration == number_of_mutations_adaptive - 1:
+                        if adaptive_mutation_already_applied == False:
+                            if fitness_function_att_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS or \
+                                fitness_function_normal_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS or \
+                                fitness_function_att_adaptive_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS:
+                                number_of_mutations_adaptive += EXTRA_MUTATIONS
+                                adaptive_mutation_already_applied = True
                     iteration += 1                    
                     print("Iteration", iteration)
 
@@ -2794,8 +2848,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
 
 
                     #appending all the data att
-                    fitness_function_att.append(fitness_mutant_att)
-                    prediction_function_att.append(pred_class_mutant_att[0][LABEL])
+                    fitness_function_att_list.append(fitness_mutant_att)
+                    prediction_function_att_list.append(pred_class_mutant_att[0][LABEL])
                     mutant_digit_att_list.append(mutant_digit_att)
                     pred_input_mutant_att_list.append(pred_input_mutant_att[0])
                     list_of_svg_points_list.append(list_of_svg_points)
@@ -2806,8 +2860,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                     mutated_points_att_list_numeric.append(point_mutated)
 
                     #appending all the data att adaptive
-                    fitness_function_att_adaptive.append(fitness_mutant_att_adaptive)
-                    prediction_function_att_adaptive.append(pred_class_mutant_att_adaptive[0][LABEL])
+                    fitness_function_att_adaptive_list.append(fitness_mutant_att_adaptive)
+                    prediction_function_att_adaptive_list.append(pred_class_mutant_att_adaptive[0][LABEL])
                     mutant_digit_att_adaptive_list.append(mutant_digit_att_adaptive)
                     pred_input_mutant_att_adaptive_list.append(pred_input_mutant_att_adaptive[0])
                     list_of_svg_points_adaptive_list.append(list_of_svg_points_adaptive)
@@ -2821,8 +2875,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                     xai_images_adaptive_list.append(xai_adaptive)
 
                     # fitness_function_normal.append(fitness_mutant_normal)
-                    fitness_function_normal.append(fitness_mutant_normal)
-                    prediction_function_normal.append(pred_class_mutant_normal[0][LABEL])                    
+                    fitness_function_normal_list.append(fitness_mutant_normal)
+                    prediction_function_normal_list.append(pred_class_mutant_normal[0][LABEL])                    
                     mutant_digit_normal_list.append(mutant_digit_normal)
                     pred_input_mutant_normal_list.append(pred_input_mutant_normal[0])
                     ext_normal_list.append(ext_normal)
@@ -2911,9 +2965,9 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                 #If True -> Will save the history of mutated digits indenpendently whether it found a miss classification or not
                 if True:
                     if SAVE_IMAGES == True and list_of_svg_points != None and list_of_svg_points_adaptive != None:
-                        folder_path = create_folder(DST, number_of_mutations, REPETITION, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed) 
+                        folder_path = create_folder(DST, number_of_mutations, repetition, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed, indices_choosen[image_index]) 
                         # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
-                        save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att, fitness_function_att_adaptive, prediction_function_att, prediction_function_att_adaptive, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list)
+                        save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att_list, fitness_function_att_adaptive_list, prediction_function_att_list, prediction_function_att_adaptive_list, fitness_function_normal_list, prediction_function_normal_list, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list)
                         make_gif(folder_path, folder_path + "/gif")
 
                     #Writing data to the stats_2.csv file - Data reagarding a cycle of mutations. 
@@ -2922,7 +2976,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                     #method_winner -> Which method took less iterations to find a missclassification
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
-                        writer.writerow([image_index, LABEL, REPETITION, seed, iterations_detection_att, iterations_detection_att_adaptive, iterations_detection_normal, method_winner])
+                        writer.writerow([image_index, LABEL, repetition, seed, iterations_detection_att, iterations_detection_att_adaptive, iterations_detection_normal, method_winner])
                     
                     if SAVE_STATS4_CSV == True:
                         #Writing the points mutated to the .csv 
@@ -2984,6 +3038,12 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
     print("Total Durantion time: ", str(end_time-start_time))
     print("n= ", n)
     print("Number of mutations= ", number_of_mutations)
+
+    diff_time = end_time - start_time
+    total_duration_string = get_diff_time_string(diff_time)
+    with open(run_info_file, 'a') as f:        
+        f.write(total_duration_string)
+        f.write('\n')
 
 
 
