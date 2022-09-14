@@ -56,6 +56,11 @@ import os
 from datetime import datetime
 import pytz
 
+from config import EXTENT, \
+EXTENT_STEP,\
+EXTENT_LOWERBOUND,\
+EXTENT_UPPERBOUND
+
 score = CategoricalScore(0)
 replace2linear = ReplaceToLinear()
 
@@ -305,7 +310,7 @@ def get_attetion_region_mth2(xai_image, orig_image, sqr_size):
     end_time = time.time()
     return x_final_pos, y_final_pos, (end_time - start_time)
 
-def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
+def get_attetion_region_prob(xai_image, svg_path_list, sqr_size):
 
     x_dim = xai_image.shape[0]
     y_dim = xai_image.shape[1]
@@ -343,11 +348,24 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
     # print("xai_list len", len(xai_list))
     # print("svg_path_list len", len(svg_path_list))
 
-    final_list =[]
+    # final_list =[]
+    list_of_weights = []
+    list_of_probabilities = []
     #sum_test = 0
 
     for sum_value, pos in zip(xai_list, svg_path_list):
-        final_list.append([pos,sum_value/sum_xai_list])
+        # final_list.append([pos,sum_value/sum_xai_list])
+        # list_of_weights.append(np.exp((sum_value/sum_xai_list)*100))
+        list_of_weights.append(2 ** ((sum_value/sum_xai_list)*100))
+
+    sum_weights_list = sum(list_of_weights)
+    for weight in list_of_weights:
+        list_of_probabilities.append(weight/sum_weights_list)
+    # print("Len svg_path_list", len(svg_path_list))
+    # print("list_of_weights", list_of_weights)
+    # print("LEN list_of_weights", len(list_of_weights))
+    # print("list_of_probabilities", list_of_probabilities)
+    # print("svg_path_list", svg_path_list)
         # sum_test += (sum_value/sum_xai_list) #Should be equal to 1
 
 
@@ -368,7 +386,7 @@ def get_attetion_region_mth3(xai_image, svg_path_list, sqr_size):
 
     # plt.cla()
 
-    return final_list
+    return list_of_weights, list_of_probabilities
 
 def get_attetion_region_mth4(xai_image, svg_path_list, sqr_size):
 
@@ -589,7 +607,7 @@ def AM_get_attetion_svg_points_images_mth1(images, x_patch_size, y_patch_size, s
      End of the list -> ]
     #----------------- END Structure of the list returned----------------#
     """
-def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
+def AM_get_attetion_svg_points_images_prob(images, square_size, svg_path, number_of_points):
     """
     AM_get_attetion_svg_points_images_mth2 Calculate the attetion score around each SVG path point and return a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points
 
@@ -598,20 +616,27 @@ def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
     :param model: The model object that will predict the value of the digit in the image 
     :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """ 
-    xai = compute_attention_maps(images, model)
+    xai = compute_attention_maps(images)
     start_time = time.time()
     # x, y = get_attetion_region(cam, images)
-    list_of_points_and_weights = []
+    # list_of_weights = []
+    # list_of_probs = []
 
-    for i in range(images.shape[0]):
-        ControlPoints = vectorization_tools.getImageControlPoints(images[i])
-        print("image",i )
-        pos_and_prob_list = get_attetion_region_mth3(xai[i], ControlPoints, sqr_size, i)
-        list_of_points_and_weights.append(pos_and_prob_list)
+
+    pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+    ControlPoints = pattern.findall(svg_path)
+    controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+    if len(ControlPoints) != 0:
+        weight_list, prob_list = get_attetion_region_prob(xai[0], controlPoints, square_size)
+    else:
+        return None, "NA", xai, controlPoints
+    # ControlPoints = vectorization_tools.getImageControlPoints(images[i])
+    # print("image",i )
+        
 
     end_time = time.time()            
-    print("Find attention points time mth3: ", (end_time - start_time))
-    return list_of_points_and_weights, (end_time - start_time)
+    # print("Find attention points time mth3: ", (end_time - start_time))
+    return weight_list, prob_list, (end_time - start_time), xai, controlPoints
     """
     #-----------------Structure of the list returned----------------#
      Start of the list -> [
@@ -642,6 +667,26 @@ def AM_get_attetion_svg_points_images_mth3(images, sqr_size, model):
      End of the list -> ]
     #----------------- END Structure of the list returned----------------#
     """
+def apply_mutoperator_attention_roullet(input_img, svg_path, extent, square_size, number_of_points):
+    list_of_weights, list_of_probs, elapsed_time, xai, original_svg_points = AM_get_attetion_svg_points_images_prob(input_img, square_size, svg_path, number_of_points)
+    # list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
+    # if len(list_of_points_close_to_square_attention_patch) != 0:
+    if list_of_weights != None:
+        original_point = random.choices(population = original_svg_points, weights = list_of_weights, k = 1)[0]
+        # print("original_point", original_point)
+        original_coordinate = random.choice(original_point)
+        # print("original_coordinate", original_coordinate)
+
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+
+
+        path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+
+        # TODO: it seems that the points inside the square attention patch do not precisely match the point coordinates in the svg, to be tested
+        return path, list_of_probs, xai, original_point, "NA", original_svg_points
+    else:
+        return svg_path, None, xai, None, None, None
+
 def AM_get_attetion_svg_points_images_mth2(images, sqr_size, svg_path):
     """
     AM_get_attetion_svg_points_images_mth1 Iterate all the image looking for the region with more attention and return list of points (tuples) inside the square region with more attention.
@@ -1233,6 +1278,8 @@ def generate_mutant(image, svg_path, extent, square_size, number_of_points, muta
             mutante_digit_path, list_of_svg_points, xai, point_mutated = apply_mutoperator_attention_2_1(image, svg_path, extent, square_size)
         elif ATTENTION_METHOD == "distances":
             mutante_digit_path, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points = apply_mutoperator_attention_distance_mth(image, svg_path, extent, square_size, number_of_points)
+        elif ATTENTION_METHOD == "probability":
+            mutante_digit_path, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points = apply_mutoperator_attention_roullet(image, svg_path, extent, square_size, number_of_points)
         # print(mutante_digit_path)
         if list_of_svg_points != None and ("C" in mutante_digit_path) and ("M" in mutante_digit_path):
             rast_nparray = rasterization_tools.rasterize_in_memory(vectorization_tools.create_svg_xml(mutante_digit_path))
@@ -1590,6 +1637,7 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
                 #Printing mutated point in another color
                 x_point_mutated = mutated_points_att_list_numeric[img_index][0]
                 y_point_mutated = mutated_points_att_list_numeric[img_index][1]
+                ax_xai_att_image.scatter(x_point_mutated, y_point_mutated, c="red")
 
                 #ADAPTIVE PART
                 #Printing mutated point in another color
@@ -1630,6 +1678,49 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
                 # rect = patches.Rectangle((square_coordinate_X-(square_size/2), square_coordinate_Y-(square_size/2)), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
                 rect_adaptive = patches.Rectangle((square_coordinate_X_adaptive + 0.5, square_coordinate_Y_adaptive + 0.5), square_size, square_size, linewidth=1, edgecolor='r', facecolor='none')
                 ax_xai_att_adaptive_image.add_patch(rect_adaptive)
+            elif ATTENTION_METHOD == "probability":
+                # print(original_svg_points_list[img_index])
+                #Printing all original SVG Points
+                ax_xai_att_image.scatter(*zip(*original_svg_points_list[img_index]), c="white")
+
+                #Printing all returned SVG points that are close to the highest attention path
+                # ax_xai_att_image.scatter(*zip(*list_of_svg_points_list[img_index]), c="blue")
+
+                #ADAPTIVE PART
+                #Printing all original SVG Points
+                ax_xai_att_adaptive_image.scatter(*zip(*original_svg_points_adaptive_list[img_index]), c="white")
+
+                #Printing all returned SVG points that are close to the highest attention path
+                # ax_xai_att_adaptive_image.scatter(*zip(*list_of_svg_points_adaptive_list[img_index]), c="blue")
+
+                #Printing mutated point in another color
+                x_point_mutated = mutated_points_att_list_numeric[img_index][0]
+                y_point_mutated = mutated_points_att_list_numeric[img_index][1]
+                ax_xai_att_image.scatter(x_point_mutated, y_point_mutated, c="red")
+                #ADAPTIVE PART
+                #Printing mutated point in another color
+                x_point_mutated_adaptive = mutated_points_att_adaptive_list_numeric[img_index][0]
+                y_point_mutated_adaptive = mutated_points_att_adaptive_list_numeric[img_index][1]
+                ax_xai_att_adaptive_image.scatter(x_point_mutated_adaptive, y_point_mutated_adaptive, c="red")
+
+                #Printing the annotations of all returned SVG points that are closer to the highest attention path
+                for pos, prob in zip(original_svg_points_list[img_index], list_of_svg_points_list[img_index]):
+                    x = pos[0]
+                    y = pos[1]
+                    x_rounded = round(x,2)
+                    y_rounded = round(y,2)
+                    prob_rounded = round(prob, 3)                  
+                    ax_xai_att_image.annotate(str(prob_rounded)+"%", (pos[0], pos[1]))
+
+                #ADAPTIVE PART
+                #Printing the annotations of all returned SVG points that are closer to the highest attention path
+                for pos, prob in zip(original_svg_points_adaptive_list[img_index], list_of_svg_points_adaptive_list[img_index]):
+                    x = pos[0]
+                    y = pos[1]
+                    x_rounded = round(x,2)
+                    y_rounded = round(y,2)
+                    prob_rounded = round(prob, 3)                  
+                    ax_xai_att_adaptive_image.annotate(str(prob_rounded)+"%", (pos[0], pos[1]))
 
             ax_fitness = fig.add_subplot(gs[1,:])
             #ATT PART
@@ -1690,7 +1781,7 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             ax_extent.set_xlabel("Iteration")
             ax_extent.set_ylabel("Extent Value")
             # ax_predictions.set_xlim([0, number_of_mutations])
-            ax_extent.set_ylim([0.05 , 1])
+            ax_extent.set_ylim([EXTENT_LOWERBOUND , EXTENT_UPPERBOUND])
             # ax_extent.set_ylim([5 , 100])
             ax_extent.grid(True)
             
@@ -2525,7 +2616,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
         DEBUG_OR_VALID, \
         FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS, \
         RUN_MNIST_SPECIFIC_INDEXES, \
-        EXTRA_MUTATIONS
+        EXTRA_MUTATIONS, \
+        NORMAL_MUTATION_ADAPTIVE_ENABLED
 
     random.seed(RANDOM_SEED)
     mnist = keras.datasets.mnist
@@ -2694,6 +2786,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                 ext_att_adaptive = EXTENT_LOWERBOUND
                 ext_normal = EXTENT
                 number_of_times_fitness_function_does_not_change_att_adaptive = 0
+                number_of_times_fitness_function_does_not_change_normal_adaptive = 0
                 # number_of_times_fitness_function_does_not_change_normal = 0
                 # fitness_1 = 1
                 # fitness_2 = 1
@@ -2833,12 +2926,24 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                         pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal_candidate)
                         fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal_candidate, LABEL)
                         if fitness_mutant_normal_candidate <= fitness_mutant_normal:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                if (fitness_mutant_normal_candidate < (0.99 * fitness_mutant_normal)):
+                                    print("RESETING ext_normal_adaptive")
+                                    ext_normal = EXTENT_LOWERBOUND 
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0 
                             pred_input_mutant_normal = pred_input_mutant_normal_candidate
                             pred_class_mutant_normal = pred_class_mutant_normal_candidate
                             fitness_mutant_normal = fitness_mutant_normal_candidate
                             mutant_digit_normal = mutant_digit_normal_candidate
                             svg_path_normal_mth = svg_path_normal_mth_candidate
                             digit_reshaped_2 = mutant_digit_normal
+                        else:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                number_of_times_fitness_function_does_not_change_normal_adaptive += 1
+                                if number_of_times_fitness_function_does_not_change_normal_adaptive > 10:                                
+                                    if (ext_normal + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                                        ext_normal += EXTENT_STEP
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0
                         mutated_points_normal_list.append(point_mutated_normal)
                     else:
                         mutated_points_normal_list.append("NA")
