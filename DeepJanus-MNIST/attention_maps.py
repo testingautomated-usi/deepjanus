@@ -1552,7 +1552,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
             plt.cla()
             plt.close(fig)
 
-def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant_image_att_adaptive_list, xai_image_list, xai_image_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att, fitness_function_att_adaptive, prediction_function_att, prediction_function_att_adaptive, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list, pred_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list):
+def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant_image_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_image_list, xai_image_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att, fitness_function_att_adaptive, prediction_function_att, prediction_function_att_adaptive, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list, pred_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list):
     if(len(iteration_list)) > 20:
         print_interval = int(len(iteration_list)/20)
     else:
@@ -3075,6 +3075,643 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive():
                         folder_path = create_folder(DST, number_of_mutations, repetition, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed, indices_choosen[image_index]) 
                         # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
                         save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att_list, fitness_function_att_adaptive_list, prediction_function_att_list, prediction_function_att_adaptive_list, fitness_function_normal_list, prediction_function_normal_list, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list)
+                        make_gif(folder_path, folder_path + "/gif")
+
+                    #Writing data to the stats_2.csv file - Data reagarding a cycle of mutations. 
+                    #iterations_detection_att -> The number of iterations ATTENTION method took to find a missclassification 
+                    #iterations_detection_normal -> The number of iterations NORAML method took to find a missclassification 
+                    #method_winner -> Which method took less iterations to find a missclassification
+                    with open(csv_path_2, "a") as f1:
+                        writer = csv.writer(f1)
+                        writer.writerow([image_index, LABEL, repetition, seed, iterations_detection_att, iterations_detection_att_adaptive, iterations_detection_normal, method_winner])
+                    
+                    if SAVE_STATS4_CSV == True:
+                        #Writing the points mutated to the .csv 
+                        list_to_write = []
+                        for iter in range(len(iteration_list)):
+                            list_to_write.append([iteration_list[iter], mutated_points_att_list[iter], mutated_points_normal_list[iter], list_of_svg_points_list_2[iter][0]])       
+
+                        with open(csv_path_4, "a") as f1:
+                            writer = csv.writer(f1)
+                            writer.writerows(list_to_write)
+                else:
+                    with open(csv_path_2, "a") as f1:
+                            writer = csv.writer(f1)
+                            writer.writerow([image_index, LABEL, REPETITION, seed, "NA", "NA", "Not Found"])
+
+            #Calculating averages and std dev
+            number_of_miss_classification_att = len(iterations_detection_att_list)  
+            number_of_miss_classification_att_adaptive = len(iterations_detection_att_adaptive_list)               
+            number_of_miss_classification_normal = len(iterations_detection_normal_list)            
+            iterations_mean_att = "NA"
+            iterations_mean_att_adaptive = "NA"
+            iterations_mean_normal = "NA"
+            iterations_std_att = "NA"
+            iterations_std_att_adaptive = "NA"
+            iterations_std_normal = "NA"
+            #NORMAL PART
+            if number_of_miss_classification_normal != 0:
+                iterations_mean_normal = np.mean(np.array(iterations_detection_normal_list))
+                iterations_std_normal = np.std(np.array(iterations_detection_normal_list))
+                iterations_mean_normal_list.append(iterations_mean_normal)
+                number_of_miss_classification_normal_list.append(number_of_miss_classification_normal)
+            #ATT PART
+            if number_of_miss_classification_att != 0:
+                iterations_mean_att = np.mean(np.array(iterations_detection_att_list))
+                iterations_std_att = np.std(np.array(iterations_detection_att_list))
+                iterations_mean_att_list.append(iterations_mean_att)
+                number_of_miss_classification_att_list.append(number_of_miss_classification_att)
+            #ADAPTIVE PART 
+            if number_of_miss_classification_att != 0:
+                iterations_mean_att_adaptive = np.mean(np.array(iterations_detection_att_adaptive_list))
+                iterations_std_att_adaptive = np.std(np.array(iterations_detection_att_adaptive_list))
+                iterations_mean_att_adaptive_list.append(iterations_mean_att_adaptive)
+                number_of_miss_classification_att_adaptive_list.append(number_of_miss_classification_att_adaptive)
+
+            #Writing data to the stats_3.csv file
+            with open(csv_path_3, "a") as f1:
+                writer = csv.writer(f1)
+                writer.writerow([image_index, LABEL, iterations_mean_att, iterations_mean_att_adaptive, iterations_mean_normal, iterations_std_att, iterations_std_att_adaptive, iterations_std_normal, number_of_miss_classification_att, number_of_miss_classification_att_adaptive, number_of_miss_classification_normal])
+
+            save_boxPlots_adaptive(iterations_mean_att_list, iterations_mean_att_adaptive_list, iterations_mean_normal_list,number_of_miss_classification_att_list, number_of_miss_classification_att_adaptive_list, number_of_miss_classification_normal_list, DST,"ADAPTIVE", NUMBER_OF_MUTATIONS, NUMBER_OF_REPETITIONS)
+            print("iterations_mean_att_list: ", iterations_mean_att_list)
+            print("iterations_mean_att_adaptive_list: ", iterations_mean_att_adaptive_list)
+            print("iterations_mean_normal_list: ", iterations_mean_normal_list)
+            print("number_of_miss_classification_att_list: ", number_of_miss_classification_att_list)
+            print("number_of_miss_classification_att_adaptive_list: ", number_of_miss_classification_att_adaptive_list)
+            print("number_of_miss_classification_normal_list: ", number_of_miss_classification_normal_list)
+                
+    end_time = time.time()
+    print("Total Durantion time: ", str(end_time-start_time))
+    print("n= ", n)
+    print("Number of mutations= ", number_of_mutations)
+
+    diff_time = end_time - start_time
+    total_duration_string = get_diff_time_string(diff_time)
+    with open(run_info_file, 'a') as f:        
+        f.write(total_duration_string)
+        f.write('\n')
+
+def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptive():
+
+    from config import MUTANTS_ROOT_FOLDER,\
+        METHOD_LIST,\
+        ATTENTION_METHOD,\
+        SAVE_IMAGES,\
+        N,\
+        EXTENT,\
+        NUMBER_OF_POINTS,\
+        SQUARE_SIZE,\
+        NUMBER_OF_MUTATIONS,\
+        NUMBER_OF_REPETITIONS,\
+        RANDOM_SEED,\
+        SHUFFLE_IMAGES,\
+        START_INDEX_DATASET,\
+        NUMBER_OF_DIGIT_SAMPLES,\
+        SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS,\
+        SAVE_STATS4_CSV,\
+        EXTENT_STEP,\
+        EXTENT_LOWERBOUND,\
+        EXTENT_UPPERBOUND ,\
+        START_SEED,\
+        DEBUG_OR_VALID, \
+        FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS, \
+        RUN_MNIST_SPECIFIC_INDEXES, \
+        EXTRA_MUTATIONS, \
+        NORMAL_MUTATION_ADAPTIVE_ENABLED
+
+    random.seed(RANDOM_SEED)
+    mnist = keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+    model = keras.models.load_model(MODEL)
+
+    MUTANTS_ROOT_FOLDER = MUTANTS_ROOT_FOLDER  
+    METHOD_LIST = METHOD_LIST
+    ATTENTION_METHOD = ATTENTION_METHOD
+    SAVE_IMAGES = SAVE_IMAGES
+    n = N
+    extent = EXTENT
+    number_of_points = NUMBER_OF_POINTS
+    square_size = SQUARE_SIZE
+    number_of_mutations = NUMBER_OF_MUTATIONS
+    number_of_repetitions = NUMBER_OF_REPETITIONS
+    
+    random.seed(START_SEED)
+    np.random.seed(START_SEED)
+           
+    images, labels, indices_choosen = initializate_list_of_images(x_test, y_test, NUMBER_OF_DIGIT_SAMPLES, RUN_MNIST_SPECIFIC_INDEXES)
+
+
+    if SHUFFLE_IMAGES == True:
+        indices = np.arange(images.shape[0])
+        np.random.shuffle(indices)
+
+        images = images[indices]
+        labels = labels[indices]   
+
+    # Creating CSVs in the MUTANTS_ROOT_FOLDER
+    run_id = str(Timer.start.strftime('%s')) 
+    DST = MUTANTS_ROOT_FOLDER + DEBUG_OR_VALID + "_ISEED=" + str(START_SEED) + "_NDS=" + str(NUMBER_OF_DIGIT_SAMPLES) + "_NM=" + str(number_of_mutations) + "_NR=" + str(number_of_repetitions) + "_EXT=" + str(extent) + "_NP=" + str(number_of_points) + "_SQRS="+ str(square_size) + "_MutType=" + METHOD_LIST[0] + "_ID=" + run_id
+    makedirs(DST)
+    start_time = time.time()
+    dt_string = get_current_time_string()
+    run_info_file = DST + "/INFO.txt"
+    lines = ["Start Time: " + dt_string , \
+        "Start SEED: " + str(START_SEED), \
+        "list_of_indices chosen: " + str(indices_choosen), \
+        "Respective Labels: " + str(labels)]
+    with open(run_info_file, 'w') as f:
+        for line in lines:
+            f.write(line)
+            f.write('\n')
+    csv_path = DST + "/stats.csv"
+    if os.path.exists(csv_path):
+        append_write = 'a'  # append if already exists
+    else:
+        append_write = 'w'  # make a new file if not
+
+    with open(csv_path, append_write) as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["IMG_Index", "Algorithm", "Mut_Method", "Label", "Prediction", "Probability", "Iteration"]) 
+
+    csv_path_2 = DST + "/stats_2.csv"
+    if os.path.exists(csv_path_2):
+        append_write = 'a'  # append if already exists
+    else:
+        append_write = 'w'  # make a new file if not
+
+    with open(csv_path_2, append_write) as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["IMG_Index", "Label", "Repetition", "Seed", "#Iterations_Att", "#Iterations_att_adaptive", "#Iterations_Normal", "#Iterations_Normal_adaptive", "Winner Method"]) 
+
+    csv_path_3 = DST + "/stats_3.csv"
+    if os.path.exists(csv_path_3):
+        append_write = 'a'  # append if already exists
+    else:
+        append_write = 'w'  # make a new file if not
+
+    with open(csv_path_3, append_write) as f1:
+        writer = csv.writer(f1)
+        writer.writerow(["IMG_Index", "Label", "Its_Mean_Att", "Its_Mean_Att_adaptive", "Its_Mean_Normal", "Its_Mean_Normal_adaptive", "Its_Std_Att", "Its_Std_Att_adaptive", "Its_Std_Normal", "Its_Std_Normal_Adaptive", "#MissClass_found_att", "#MissClass_found_att_adaptive", "#MissClass_found_Normal", "#MissClass_found_Normal_adaptive"])
+
+    if SAVE_STATS4_CSV == True:
+        csv_path_4 = DST + "/stats_4.csv"
+        if os.path.exists(csv_path_3):
+            append_write = 'a'  # append if already exists
+        else:
+            append_write = 'w'  # make a new file if not
+
+        with open(csv_path_4, append_write) as f1:
+            writer = csv.writer(f1)
+            writer.writerow(["Iteration", "Point Mutated Att","Point Mutated Normal", "List of points to be mutated Att"])
+ 
+    iterations_mean_att_list = [] 
+    iterations_mean_normal_list = []
+    iterations_mean_att_adaptive_list = []  
+    iterations_mean_normal_adaptive_list = []   
+    number_of_miss_classification_att_list = []
+    number_of_miss_classification_normal_list = []
+    number_of_miss_classification_att_adaptive_list = []
+    number_of_miss_classification_normal_adaptive_list = []
+    for METHOD in METHOD_LIST:
+        print("METHOD: ", METHOD) 
+                            
+        for image_index in range(images.shape[0]):
+            print("Image ", str(image_index))
+            image = images[image_index].reshape(1,28,28)
+            label = labels[image_index]
+            LABEL = label
+            digit_1 = copy.deepcopy(image)
+            digit_2 = copy.deepcopy(image)
+            digit_3 = copy.deepcopy(image)
+            digit_4 = copy.deepcopy(image)
+            
+            iteration = 0
+            
+            iterations_detection_normal_list = []
+            iterations_detection_att_list = []
+            iterations_detection_att_adaptive_list = []
+            iterations_detection_normal_adaptive_list = []
+            for repetition in range(1,number_of_repetitions + 1):
+                seed = SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS[repetition - 1]
+                random.seed(seed)
+                np.random.seed(seed)
+                print("Seed: ", seed)
+                print("Repetition", repetition)
+                digit_reshaped_1 = input_reshape_and_normalize_images(digit_1)
+                digit_reshaped_2 = input_reshape_and_normalize_images(digit_2)
+                digit_reshaped_3 = input_reshape_and_normalize_images(digit_3)
+                digit_reshaped_4 = input_reshape_and_normalize_images(digit_4)
+                iteration_list = []
+                fitness_function_att_list = []
+                prediction_function_att_list = []
+                fitness_function_att_adaptive_list = []
+                prediction_function_att_adaptive_list = []
+                fitness_function_normal_list = []
+                prediction_function_normal_list = []
+                fitness_function_normal_adaptive_list = []
+                prediction_function_normal_adaptive_list = []
+                mutant_digit_att_list = []
+                mutant_digit_att_adaptive_list = []
+                mutant_digit_normal_list =[]
+                mutant_digit_normal_adaptive_list =[]
+                xai_images_list = []
+                xai_images_adaptive_list = []
+                list_of_svg_points_list = []
+                list_of_svg_points_adaptive_list = []
+                pred_input_mutant_att_list = []
+                pred_input_mutant_att_adaptive_list = []
+                pred_input_mutant_normal_list = []
+                pred_input_mutant_normal_adaptive_list = []
+                mutated_points_att_list = []
+                mutated_points_att_adaptive_list = []
+                mutated_points_normal_list = []
+                mutated_points_normal_adaptive_list = []
+                list_of_svg_points_list_2 = []
+                list_of_svg_points_adaptive_list_2 = []
+                square_att_coordinates_list = []
+                square_att_coordinates_adaptive_list = []
+                original_svg_points_list = []
+                original_svg_points_adaptive_list = []
+                mutated_points_att_list_numeric = []
+                mutated_points_att_adaptive_list_numeric = []
+
+                ext_att_list = []
+                ext_att_adaptive_list = []
+                ext_normal_list = []
+                ext_normal_adaptive_list = []
+                
+                if ATTENTION_METHOD == "mth1": number_of_points = "NA"
+                miss_classification_found_att = False
+                miss_classification_found_att_adaptive = False
+                miss_classification_found_normal = False
+                miss_classification_found_normal_adaptive = False
+                method_winner = None
+                iterations_detection_att = "NA"
+                iterations_detection_att_adaptive = "NA"
+                iterations_detection_normal = "NA"
+                iterations_detection_normal_adaptive = "NA"
+                iteration = 0
+                svg_path_att_mth = None
+                svg_path_att_adaptive_mth = None
+                svg_path_normal_mth = None
+                svg_path_normal_adaptive_mth = None
+                ext_att = EXTENT
+                ext_att_adaptive = EXTENT_LOWERBOUND
+                ext_normal = EXTENT
+                ext_normal_adaptive = EXTENT
+                number_of_times_fitness_function_does_not_change_att_adaptive = 0
+                number_of_times_fitness_function_does_not_change_normal_adaptive = 0
+                # number_of_times_fitness_function_does_not_change_normal = 0
+                # fitness_1 = 1
+                # fitness_2 = 1
+                # fitness_mutant_att = 1
+                number_of_mutations_adaptive = number_of_mutations
+                adaptive_mutation_already_applied = False
+                while (iteration < number_of_mutations_adaptive):
+                    if iteration == number_of_mutations_adaptive - 1:
+                        if adaptive_mutation_already_applied == False:
+                            if fitness_function_att_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS or \
+                                fitness_function_normal_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS or \
+                                fitness_function_att_adaptive_list[-1] < FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS:
+                                number_of_mutations_adaptive += EXTRA_MUTATIONS
+                                adaptive_mutation_already_applied = True
+                    iteration += 1                    
+                    print("Iteration", iteration)
+
+                    # Check if a missclassification was already found for ATTENTION Method. If yes, the digit will not be mutated anymore
+                    if miss_classification_found_att == False:
+                    # if False or iteration < 2:
+                        # pred_class_1 = model.predict(digit_reshaped_1)
+                        # fitness_1_tmp = evaluate_ff2(pred_class_1, LABEL)
+                        # if fitness_1_tmp < fitness_1:
+                        #     fitness_1 = fitness_1_tmp
+                        if iteration == 1:
+                            svg_path_att_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_1)[0]) 
+                            pred_class_mutant_att = model.predict(digit_reshaped_1) 
+                            fitness_mutant_att = evaluate_ff2(pred_class_mutant_att, LABEL) 
+                            mutant_digit_att =  digit_reshaped_1
+                            pred_input_mutant_att = model.predict_classes(mutant_digit_att) 
+                        #Generating Mutant Candidate                                   
+                        mutant_digit_att_candidate, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points, svg_path_att_mth_candidate = generate_mutant(input_reshape_images_reverse(digit_reshaped_1), svg_path_att_mth, ext_att, square_size, number_of_points, True, ATTENTION_METHOD) 
+
+                        #If there is no highest attention point found, it means the digit mutated is close to an invalid digit and we can stop mutating using Attention Method
+                        if list_of_svg_points == None: 
+                            break    
+                        list_of_svg_points_2 = list_of_svg_points 
+                        if ATTENTION_METHOD == "mth5":
+                            list_of_svg_points = [[point_mutated]]    
+                        shape = mutant_digit_att_candidate.shape
+                        #Analysing if the candidate is good
+                        pred_input_mutant_att_candidate = model.predict_classes(mutant_digit_att_candidate)
+                        pred_class_mutant_att_candidate = model.predict(mutant_digit_att_candidate)
+                        fitness_mutant_att_candidate = evaluate_ff2(pred_class_mutant_att_candidate, LABEL)                                       
+                        if fitness_mutant_att_candidate <= fitness_mutant_att:
+                            # print(fitness_mutant_att)                 
+                            # print(fitness_mutant_att_candidate) 
+                            # if (fitness_mutant_att_candidate < (0.99 * fitness_mutant_att)):
+                            #     print("RESETING ext_att")
+                            #     ext_att = EXTENT_LOWERBOUND 
+                            #     number_of_times_fitness_function_does_not_change_att_adaptive = 0                            
+                            pred_input_mutant_att = pred_input_mutant_att_candidate
+                            pred_class_mutant_att = pred_class_mutant_att_candidate
+                            fitness_mutant_att = fitness_mutant_att_candidate
+                            mutant_digit_att = mutant_digit_att_candidate
+                            svg_path_att_mth = svg_path_att_mth_candidate
+                            digit_reshaped_1 = mutant_digit_att
+                        # else:
+                        #     number_of_times_fitness_function_does_not_change_att_adaptive += 1
+                        #     # print(number_of_times_fitness_function_does_not_change_att)
+                        #     if number_of_times_fitness_function_does_not_change_att_adaptive > 10:                                
+                        #         if (ext_att + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                        #             ext_att = ext_att + EXTENT_STEP
+                        #         # print("Ext_att Doubled", ext_att)
+                        #         number_of_times_fitness_function_does_not_change_att_adaptive = 0
+                        mutated_points_att_list.append(point_mutated)
+                    else:
+                        mutated_points_att_list.append("NA")
+
+                                        # Check if a missclassification was already found for ATTENTION Method. If yes, the digit will not be mutated anymore
+                    if miss_classification_found_att_adaptive == False:
+                    # if False or iteration < 2:
+                        # pred_class_1 = model.predict(digit_reshaped_1)
+                        # fitness_1_tmp = evaluate_ff2(pred_class_1, LABEL)
+                        # if fitness_1_tmp < fitness_1:
+                        #     fitness_1 = fitness_1_tmp
+                        if iteration == 1:
+                            svg_path_att_adaptive_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_3)[0]) 
+                            pred_class_mutant_att_adaptive = model.predict(digit_reshaped_3) 
+                            fitness_mutant_att_adaptive = evaluate_ff2(pred_class_mutant_att_adaptive, LABEL) 
+                            mutant_digit_att_adaptive =  digit_reshaped_3
+                            pred_input_mutant_att_adaptive = model.predict_classes(mutant_digit_att) 
+                        #Generating Mutant Candidate                                   
+                        mutant_digit_att_candidate_adaptive, list_of_svg_points_adaptive, xai_adaptive, point_mutated_adaptive, square_att_coordinates_adaptive, original_svg_points_adaptive, svg_path_att_mth_candidate_adaptive = generate_mutant(input_reshape_images_reverse(digit_reshaped_3), svg_path_att_adaptive_mth, ext_att_adaptive, square_size, number_of_points, True, ATTENTION_METHOD) 
+
+                        #If there is no highest attention point found, it means the digit mutated is close to an invalid digit and we can stop mutating using Attention Method
+                        if list_of_svg_points_adaptive == None: 
+                            break    
+                        list_of_svg_points_2_adaptive = list_of_svg_points_adaptive 
+                        if ATTENTION_METHOD == "mth5":
+                            list_of_svg_points_adaptive = [[point_mutated_adaptive]]    
+                        shape = mutant_digit_att_candidate_adaptive.shape
+                        #Analysing if the candidate is good
+                        pred_input_mutant_att_candidate_adaptive = model.predict_classes(mutant_digit_att_candidate_adaptive)
+                        pred_class_mutant_att_candidate_adaptive = model.predict(mutant_digit_att_candidate_adaptive)
+                        fitness_mutant_att_candidate_adaptive = evaluate_ff2(pred_class_mutant_att_candidate_adaptive, LABEL)                                       
+                        if fitness_mutant_att_candidate_adaptive <= fitness_mutant_att_adaptive:
+                            # print(fitness_mutant_att)                 
+                            # print(fitness_mutant_att_candidate) 
+                            if (fitness_mutant_att_candidate_adaptive < (0.99 * fitness_mutant_att_adaptive)):
+                                print("RESETING ext_att_adaptive")
+                                ext_att_adaptive = EXTENT_LOWERBOUND 
+                                number_of_times_fitness_function_does_not_change_att_adaptive = 0                            
+                            pred_input_mutant_att_adaptive = pred_input_mutant_att_candidate_adaptive
+                            pred_class_mutant_att_adaptive = pred_class_mutant_att_candidate_adaptive
+                            fitness_mutant_att_adaptive = fitness_mutant_att_candidate_adaptive
+                            mutant_digit_att_adaptive = mutant_digit_att_candidate_adaptive
+                            svg_path_att_adaptive_mth = svg_path_att_mth_candidate_adaptive
+                            digit_reshaped_3 = mutant_digit_att_adaptive
+                        else:
+                            number_of_times_fitness_function_does_not_change_att_adaptive += 1
+                            # print(number_of_times_fitness_function_does_not_change_att)
+                            if number_of_times_fitness_function_does_not_change_att_adaptive > 10:                                
+                                if (ext_att_adaptive + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                                    ext_att_adaptive = ext_att_adaptive + EXTENT_STEP
+                                # print("Ext_att Doubled", ext_att)
+                                number_of_times_fitness_function_does_not_change_att_adaptive = 0
+                        mutated_points_att_adaptive_list.append(point_mutated_adaptive)
+                    else:
+                        mutated_points_att_adaptive_list.append("NA")    
+
+                    # Check if a missclassification was already found for NORMAL Method. If yes, the digit will not be mutated anymore
+                    if miss_classification_found_normal == False:
+                    # if False or iteration < 2:
+                        # pred_class_2 = model.predict(digit_reshaped_2)
+                        # fitness_2_tmp = evaluate_ff2(pred_class_2, LABEL)
+                        # if fitness_2_tmp < fitness_2:
+                        #     fitness_2 = fitness_2_tmp
+                        if iteration == 1:
+                            svg_path_normal_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_2)[0])
+                            mutant_digit_normal = digit_reshaped_2
+                            pred_class_mutant_normal = model.predict(digit_reshaped_2)
+                            fitness_mutant_normal = evaluate_ff2(pred_class_mutant_normal, LABEL)
+                            pred_input_mutant_normal = model.predict_classes(mutant_digit_normal)
+                        mutant_digit_normal_candidate, point_mutated_normal, svg_path_normal_mth_candidate = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
+                        pred_input_mutant_normal_candidate = model.predict_classes(mutant_digit_normal_candidate)
+                        pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal_candidate)
+                        fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal_candidate, LABEL)
+                        if fitness_mutant_normal_candidate <= fitness_mutant_normal:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                if (fitness_mutant_normal_candidate < (0.99 * fitness_mutant_normal)):
+                                    print("RESETING ext_normal_adaptive")
+                                    ext_normal = EXTENT_LOWERBOUND 
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0 
+                            pred_input_mutant_normal = pred_input_mutant_normal_candidate
+                            pred_class_mutant_normal = pred_class_mutant_normal_candidate
+                            fitness_mutant_normal = fitness_mutant_normal_candidate
+                            mutant_digit_normal = mutant_digit_normal_candidate
+                            svg_path_normal_mth = svg_path_normal_mth_candidate
+                            digit_reshaped_2 = mutant_digit_normal
+                        else:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                number_of_times_fitness_function_does_not_change_normal_adaptive += 1
+                                if number_of_times_fitness_function_does_not_change_normal_adaptive > 10:                                
+                                    if (ext_normal + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                                        ext_normal += EXTENT_STEP
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0
+                        mutated_points_normal_list.append(point_mutated_normal)
+                    else:
+                        mutated_points_normal_list.append("NA")
+                    
+                    #Appending all the data to the list. Necessary to generate the plots of mutations sequentially.
+                    iteration_list.append(iteration)
+
+                    # Check if a missclassification was already found for NORMAL Method. If yes, the digit will not be mutated anymore
+                    if miss_classification_found_normal_adaptive == False:
+                    # if False or iteration < 2:
+                        # pred_class_2 = model.predict(digit_reshaped_2)
+                        # fitness_2_tmp = evaluate_ff2(pred_class_2, LABEL)
+                        # if fitness_2_tmp < fitness_2:
+                        #     fitness_2 = fitness_2_tmp
+                        if iteration == 1:
+                            svg_path_normal_adaptive_mth = get_svg_path(input_reshape_images_reverse(digit_reshaped_4)[0])
+                            mutant_digit_normal_adaptive = digit_reshaped_4
+                            pred_class_mutant_normal_adaptive = model.predict(digit_reshaped_4)
+                            fitness_mutant_normal_adaptive = evaluate_ff2(pred_class_mutant_normal_adaptive, LABEL)
+                            pred_input_mutant_normal_adaptive = model.predict_classes(mutant_digit_normal_adaptive)
+                        mutant_digit_normal_candidate_adaptive, point_mutated_normal_adaptive, svg_path_normal_mth_candidate_adaptive = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
+                        pred_input_mutant_normal_candidate_adaptive = model.predict_classes(mutant_digit_normal_candidate_adaptive)
+                        pred_class_mutant_normal_candidate_adaptive = model.predict(mutant_digit_normal_candidate_adaptive)
+                        fitness_mutant_normal_candidate_adaptive = evaluate_ff2(pred_class_mutant_normal_candidate_adaptive, LABEL)
+                        if fitness_mutant_normal_candidate_adaptive <= fitness_mutant_normal_adaptive:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                if (fitness_mutant_normal_candidate_adaptive < (0.99 * fitness_mutant_normal_adaptive)):
+                                    print("RESETING ext_normal_adaptive")
+                                    ext_normal_adaptive = EXTENT_LOWERBOUND 
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0 
+                            pred_input_mutant_normal_adaptive = pred_input_mutant_normal_candidate_adaptive
+                            pred_class_mutant_normal_adaptive = pred_class_mutant_normal_candidate_adaptive
+                            fitness_mutant_normal_adaptive = fitness_mutant_normal_candidate_adaptive
+                            mutant_digit_normal_adaptive = mutant_digit_normal_candidate_adaptive
+                            svg_path_normal_adaptive_mth = svg_path_normal_mth_candidate_adaptive
+                            digit_reshaped_4 = mutant_digit_normal_adaptive
+                        else:
+                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                                number_of_times_fitness_function_does_not_change_normal_adaptive += 1
+                                if number_of_times_fitness_function_does_not_change_normal_adaptive > 10:                                
+                                    if (ext_normal_adaptive + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                                        ext_normal_adaptive += EXTENT_STEP
+                                    number_of_times_fitness_function_does_not_change_normal_adaptive = 0
+                        mutated_points_normal_adaptive_list.append(point_mutated_normal_adaptive)
+                    else:
+                        mutated_points_normal_adaptive_list.append("NA")
+                    
+                    #Appending all the data to the list. Necessary to generate the plots of mutations sequentially.
+                    iteration_list.append(iteration)
+
+
+                    #appending all the data att
+                    fitness_function_att_list.append(fitness_mutant_att)
+                    prediction_function_att_list.append(pred_class_mutant_att[0][LABEL])
+                    mutant_digit_att_list.append(mutant_digit_att)
+                    pred_input_mutant_att_list.append(pred_input_mutant_att[0])
+                    list_of_svg_points_list.append(list_of_svg_points)
+                    list_of_svg_points_list_2.append(list_of_svg_points_2)
+                    ext_att_list.append(ext_att)
+                    square_att_coordinates_list.append(square_att_coordinates)
+                    original_svg_points_list.append(original_svg_points)
+                    mutated_points_att_list_numeric.append(point_mutated)
+
+                    #appending all the data att adaptive
+                    fitness_function_att_adaptive_list.append(fitness_mutant_att_adaptive)
+                    prediction_function_att_adaptive_list.append(pred_class_mutant_att_adaptive[0][LABEL])
+                    mutant_digit_att_adaptive_list.append(mutant_digit_att_adaptive)
+                    pred_input_mutant_att_adaptive_list.append(pred_input_mutant_att_adaptive[0])
+                    list_of_svg_points_adaptive_list.append(list_of_svg_points_adaptive)
+                    list_of_svg_points_adaptive_list_2.append(list_of_svg_points_2_adaptive)
+                    ext_att_adaptive_list.append(ext_att_adaptive)
+                    square_att_coordinates_adaptive_list.append(square_att_coordinates_adaptive)
+                    original_svg_points_adaptive_list.append(original_svg_points_adaptive)
+                    mutated_points_att_adaptive_list_numeric.append(point_mutated_adaptive)
+
+                    xai_images_list.append(xai)
+                    xai_images_adaptive_list.append(xai_adaptive)
+
+                    # fitness_function_normal.append(fitness_mutant_normal)
+                    fitness_function_normal_list.append(fitness_mutant_normal)
+                    prediction_function_normal_list.append(pred_class_mutant_normal[0][LABEL])                    
+                    mutant_digit_normal_list.append(mutant_digit_normal)
+                    pred_input_mutant_normal_list.append(pred_input_mutant_normal[0])
+                    ext_normal_list.append(ext_normal)
+
+                    # Normal Adaptive Part
+                    fitness_function_normal_adaptive_list.append(fitness_mutant_normal_adaptive)
+                    prediction_function_normal_adaptive_list.append(pred_class_mutant_normal_adaptive[0][LABEL])                    
+                    mutant_digit_normal_adaptive_list.append(mutant_digit_normal_adaptive)
+                    pred_input_mutant_normal_list.append(pred_input_mutant_normal_adaptive[0])
+                    ext_normal_adaptive_list.append(ext_normal_adaptive)
+
+                    #Checking if the prediction of the mutant digit generated by ATTENTION Method is different from the ground truth (label)
+                    if pred_input_mutant_att[0] != LABEL:                        
+                        if miss_classification_found_att == False:
+                            iterations_detection_att_list.append(iteration)
+                            iterations_detection_att = iteration
+
+                            #Writing data to the stats.csv file - Data with the predicitions of both mutated digits (NORMAL and ATTENTION), Label and iteration
+                            with open(csv_path, "a") as f1:
+                                writer = csv.writer(f1)
+                                writer.writerow([image_index, "ATTENTION", METHOD, LABEL, pred_input_mutant_att[0], pred_class_mutant_att[0][LABEL], iteration])   
+                        miss_classification_found_att = True
+                        if method_winner == None: method_winner = "Heatmaps"
+                    
+                    #Checking if the prediction of the mutant digit generated by ATTENTION Method ADATPTIVE is different from the ground truth (label)
+                    if pred_input_mutant_att_adaptive[0] != LABEL:                        
+                        if miss_classification_found_att_adaptive == False:
+                            iterations_detection_att_adaptive_list.append(iteration)
+                            iterations_detection_att_adaptive = iteration
+
+                            #Writing data to the stats.csv file - Data with the predicitions of both mutated digits (NORMAL and ATTENTION), Label and iteration
+                            with open(csv_path, "a") as f1:
+                                writer = csv.writer(f1)
+                                writer.writerow([image_index, "ATTENTION ADAPTIVE", METHOD, LABEL, pred_input_mutant_att_adaptive[0], pred_class_mutant_att_adaptive[0][LABEL], iteration])   
+                        miss_classification_found_att_adaptive = True
+                        if method_winner == None: method_winner = "Heatmaps adaptive"
+
+                    #Checking if the prediction of the mutant digit generated by NORMAL Method is different from the ground truth (label)
+                    if pred_input_mutant_normal[0] != LABEL:                         
+                        if miss_classification_found_normal == False:
+                            iterations_detection_normal_list.append(iteration)
+                            iterations_detection_normal = iteration
+                        
+                        #Writing data to the stats.csv file - Data with the predicitions of both mutated digits (NORMAL and ATTENTION), Label and iteration
+                            with open(csv_path, "a") as f1:
+                                writer = csv.writer(f1)
+                                writer.writerow([image_index, "NORMAL", METHOD, LABEL, pred_input_mutant_normal[0], pred_class_mutant_normal[0][LABEL], iteration])                    
+                        miss_classification_found_normal = True
+                        if method_winner == None: method_winner = "Normal"
+                    
+                    #Checking if the prediction of the mutant digit generated by NORMAL ADAPTIVE Method is different from the ground truth (label)
+                    if pred_input_mutant_normal_adaptive[0] != LABEL:                         
+                        if miss_classification_found_normal_adaptive == False:
+                            iterations_detection_normal_adaptive_list.append(iteration)
+                            iterations_detection_normal_adaptive = iteration
+                        
+                        #Writing data to the stats.csv file - Data with the predicitions of both mutated digits (NORMAL and ATTENTION), Label and iteration
+                            with open(csv_path, "a") as f1:
+                                writer = csv.writer(f1)
+                                writer.writerow([image_index, "NRML ADAPTIVE", METHOD, LABEL, pred_input_mutant_normal_adaptive[0], pred_class_mutant_normal_adaptive[0][LABEL], iteration])                    
+                        miss_classification_found_normal_adaptive = True
+                        if method_winner == None: method_winner = "Normal Adaptive"
+
+                    #If miss classifications were found for both mutation method, we can stop the loop
+                    if miss_classification_found_att == True and miss_classification_found_normal == True and miss_classification_found_att_adaptive == True and miss_classification_found_normal_adaptive == True:
+                        break
+                    
+                    #If Fitness Function calculated for mutated digits are less than the Fitness Function calculated for the previous digit (the digit before the last mutation), 
+                    
+                    # if (fitness_mutant_att < fitness_1) or (fitness_mutant_normal < fitness_2):                        
+                        
+                    # so we can replace the new "original" digit for the mutated one. ATTENTION Method
+                    # if (fitness_mutant_att_candidate < fitness_mutant_att):
+                    #     if METHOD == "remut":
+                    #         digit_reshaped_1 = mutant_digit_att
+                    #     if (fitness_mutant_att_candidate < 0.99 * fitness_mutant_att):
+                    #         ext_att = EXTENT_LOWERBOUND 
+                    #         number_of_times_fitness_function_does_not_change_att = 0 
+                    # else:
+                    #     number_of_times_fitness_function_does_not_change_att += 1
+                    #     # print(number_of_times_fitness_function_does_not_change_att)
+                    #     if number_of_times_fitness_function_does_not_change_att > 10:                                
+                    #         if (ext_att + EXTENT_STEP) <= EXTENT_UPPERBOUND:
+                    #             ext_att = ext_att + EXTENT_STEP
+                    #         # print("Ext_att Doubled", ext_att)
+                    #         number_of_times_fitness_function_does_not_change_att = 0
+                    
+                    # so we can replace the new "original" digit for the mutated one. NORMAL Method
+                    # if (fitness_mutant_normal < fitness_2):
+                    #     if METHOD == "remut":
+                    #         digit_reshaped_2 = mutant_digit_normal
+                    #     if (fitness_mutant_normal < 0.99 * fitness_2):
+                    #         ext_normal = EXTENT
+                    #         number_of_times_fitness_function_does_not_change_normal = 0 
+                    # else:
+                    #     number_of_times_fitness_function_does_not_change_normal += 1
+                    #     # print(number_of_times_fitness_function_does_not_change_normal)
+                    #     if number_of_times_fitness_function_does_not_change_normal > 10:                                
+                    #         ext_normal = ext_normal * 2
+                    #         # print("Ext_normal Doubled", ext_normal)
+                    #         number_of_times_fitness_function_does_not_change_normal = 0
+
+                #Will save the history of mutated digits only when at least one of method was able to find a missclassification
+                # if miss_classification_found_att == True or miss_classification_found_normal == True:
+
+                #If True -> Will save the history of mutated digits indenpendently whether it found a miss classification or not
+                if True:
+                    if SAVE_IMAGES == True and list_of_svg_points != None and list_of_svg_points_adaptive != None:
+                        folder_path = create_folder(DST, number_of_mutations, repetition, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed, indices_choosen[image_index]) 
+                        # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
+                        save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att_list, fitness_function_att_adaptive_list, prediction_function_att_list, prediction_function_att_adaptive_list, fitness_function_normal_list, prediction_function_normal_list, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list)
                         make_gif(folder_path, folder_path + "/gif")
 
                     #Writing data to the stats_2.csv file - Data reagarding a cycle of mutations. 
