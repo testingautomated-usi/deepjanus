@@ -355,8 +355,8 @@ def get_attetion_region_prob(xai_image, svg_path_list, sqr_size):
 
     for sum_value, pos in zip(xai_list, svg_path_list):
         # final_list.append([pos,sum_value/sum_xai_list])
-        # list_of_weights.append(np.exp((sum_value/sum_xai_list)*100))
-        list_of_weights.append(2 ** ((sum_value/sum_xai_list)*100))
+        list_of_weights.append(np.exp((sum_value/sum_xai_list)*100))
+        # list_of_weights.append(2 ** ((sum_value/sum_xai_list)*100))
 
     sum_weights_list = sum(list_of_weights)
     for weight in list_of_weights:
@@ -2492,6 +2492,7 @@ def option4():
     plt.savefig("./xai/time_analysis.jpg")
 
 def how_to_use_Vincenzo_fuctions():
+    #TODO: Example how to generate mutants
 
     random.seed(1)
     np.random.seed(1)
@@ -2529,6 +2530,7 @@ def how_to_use_Vincenzo_fuctions():
         digit_reshaped_and_normalized = input_reshape_and_normalize_images(image)
         svg_path_att_mth = get_svg_path(images[i].reshape(28,28))
         #generate_mutant accepts NON-Normalized images (MAX = 255)
+        #TODO: Core part
         mutant_vector_rasterized, list_of_svg_points, xai, point_mutated, square_att_coordinates, original_svg_points, svg_path_att_mth_candidate = generate_mutant(image, svg_path_att_mth, extent, square_size, number_of_points, True, "distances")  
 
         # svg_path = get_svg_path(images[i].reshape(28,28))
