@@ -75,14 +75,14 @@ EXTENT_LOWERBOUND = 0.2
 EXTENT_UPPERBOUND = 2
 NUMBER_OF_POINTS = 6
 SQUARE_SIZE = 3
-NUMBER_OF_MUTATIONS = 1000
-NUMBER_OF_REPETITIONS = 5
+NUMBER_OF_MUTATIONS = 500
+NUMBER_OF_REPETITIONS = 1
 SEEDS_LIST_FOR_REPETITIONS_OF_MUTATIONS = [4398, 980, 987423, 99982, 1123, 4098, 1946, 22601, 55037, 812109, 53898, 187988]
 NORMAL_MUTATION_ADAPTIVE_ENABLED = True
 
 #Adaptive number of Mutations CONFIG
 FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS = 0.8 #The script will add more mutations if the Fitness is less than the THRESHOLD
-EXTRA_MUTATIONS = 1000 #Number of mutations to be added
+EXTRA_MUTATIONS = 1 #Number of mutations to be added
 
 #Init Data Set CONFIG
 RANDOM_SEED = 1
@@ -91,9 +91,10 @@ NUMBER_OF_DIGIT_SAMPLES = 5 #Number of samples of a same digit that will be muta
 N = 10 * NUMBER_OF_DIGIT_SAMPLES #Nummber of total Images to take from MNIST dataset
 
 START_SEED = 1
-DEBUG_OR_VALID = "VALID"
+DEBUG_OR_VALID = "DEBUG"
 # RUNNING_OPTION = "ATT_vs_NOR"
-RUNNING_OPTION = "ATT_vs_ATT+ADP_vs_NOR"
+# RUNNING_OPTION = "ATT_vs_ATT+ADP_vs_NOR"
+RUNNING_OPTION = "ATT_vs_ATT+ADP_vs_NOR_vs_NOR+ADP"
 # RUNNING_OPTION = "VINCENZO_FUNCTIONS_DEMO"
 
 #Specify the MNIST images (by the indexes) to reproduce results. If None, the list of images to be tested will be initialized randomly based on START_SEED.

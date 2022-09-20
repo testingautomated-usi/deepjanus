@@ -1395,6 +1395,36 @@ def save_boxPlots(a,b,c,d, folder_path, ext, number_of_mutations, number_of_repe
     plt.cla()
     plt.close(fig)
 
+def save_boxPlots_adaptive2(a,a_adp,b,b_adp,c,c_adp,d,d_adp,folder_path, ext, number_of_mutations, number_of_repetitions):
+    fig = plt.figure(figsize=(9,10))
+    gs = gridspec.GridSpec(nrows=1, ncols=2, width_ratios=[1,1], height_ratios=[1])
+    ax0 = fig.add_subplot(gs[0,0])
+    data0 = [a, a_adp, b, b_adp]
+    bp0 = ax0.boxplot(data0, labels = ["Attention", "Att Adaptive", "Normal", "Normal Adp"], patch_artist = True)
+    ax0.grid(True)
+    ax0.set_title("Number of iterations to find miss classification")
+
+    colors = ['blue', 'green', 'red', 'yellow']
+ 
+    for patch, color in zip(bp0['boxes'], colors):
+        patch.set_facecolor(color)
+
+    ax1 = fig.add_subplot(gs[0,1])
+    data1 = [c, c_adp, d, d_adp]
+    bp1 = ax1.boxplot(data1, labels = ["Attention", "Att Adaptive", "Normal", "Normal Adp"], patch_artist = True)
+    ax1.grid(True)
+    ax1.set_title("Number of miss classifications found")
+
+    for patch, color in zip(bp1['boxes'], colors):
+        patch.set_facecolor(color)
+
+    
+    # fig.suptitle("Ext="+str(ext)+"_#Mutations="+str(number_of_mutations)+"_#Repetitions="+str(number_of_repetitions))
+    plt.tight_layout()
+    plt.savefig(folder_path + "/boxplots"+"_Ext="+str(ext)+"_#Mutations="+str(number_of_mutations)+"_#Repetitions="+str(number_of_repetitions)+".png")
+    plt.cla()
+    plt.close(fig)
+
 def save_boxPlots_adaptive(a,a_adp,b,c,c_adp, d, folder_path, ext, number_of_mutations, number_of_repetitions):
     fig = plt.figure(figsize=(9,10))
     gs = gridspec.GridSpec(nrows=1, ncols=2, width_ratios=[1,1], height_ratios=[1])
@@ -1552,7 +1582,7 @@ def save_images(mutant_image_normal_list, mutant_image_att_list, xai_image_list,
             plt.cla()
             plt.close(fig)
 
-def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant_image_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_image_list, xai_image_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att, fitness_function_att_adaptive, prediction_function_att, prediction_function_att_adaptive, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_normal_list, pred_att_list, pred_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list):
+def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant_image_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_image_list, xai_image_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att, fitness_function_att_adaptive, prediction_function_att, prediction_function_att_adaptive, fitness_function_normal, fitness_function_normal_adaptive, prediction_function_normal, prediction_function_normal_adaptive, number_of_mutations, folder_path, pred_normal_list, pred_normal_adaptive_list, pred_att_list, pred_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list, ext_normal_adaptive_list):
     if(len(iteration_list)) > 20:
         print_interval = int(len(iteration_list)/20)
     else:
@@ -1560,24 +1590,29 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
     for img_index in range(len(iteration_list)):
         if img_index % print_interval == 0 or img_index == len(iteration_list) - 1:
             fig = plt.figure(figsize=(15,10))
-            gs = gridspec.GridSpec(nrows=4,ncols=5, width_ratios=[1,1,1,1,1], height_ratios=[1,1,1,1])
+            gs = gridspec.GridSpec(nrows=4,ncols=6, width_ratios=[1,1,1,1,1,1], height_ratios=[1,1,1,1])
             ax_mutant_normal_image = fig.add_subplot(gs[0,0])
             ax_mutant_normal_image.imshow(mutant_image_normal_list[img_index].reshape(28, 28), cmap = "gray")
             ax_mutant_normal_image.set_title("Normal Pred = " + str(pred_normal_list[img_index]), color="red")
 
-            ax_mutant_att_image = fig.add_subplot(gs[0,1])
+            #Normal Adaptive Part
+            ax_mutant_normal_adaptive_image = fig.add_subplot(gs[0,1])
+            ax_mutant_normal_adaptive_image.imshow(mutant_digit_normal_adaptive_list[img_index].reshape(28, 28), cmap = "gray")
+            ax_mutant_normal_adaptive_image.set_title("Normal Adpt Pred = " + str(pred_normal_list[img_index]), color="yellow")
+
+            ax_mutant_att_image = fig.add_subplot(gs[0,2])
             ax_mutant_att_image.imshow(mutant_image_att_list[img_index].reshape(28, 28), cmap = "gray")
             ax_mutant_att_image.set_title("Att Pred= " + str(pred_att_list[img_index]), color="blue")
 
-            ax_xai_att_image = fig.add_subplot(gs[0,2])
+            ax_xai_att_image = fig.add_subplot(gs[0,3])
             ax_xai_att_image.imshow(xai_image_list[img_index][0], cmap = "jet")
 
             #ADAPTIVE PART
-            ax_mutant_att_adaptive_image = fig.add_subplot(gs[0,3])
+            ax_mutant_att_adaptive_image = fig.add_subplot(gs[0,4])
             ax_mutant_att_adaptive_image.imshow(mutant_image_att_adaptive_list[img_index].reshape(28, 28), cmap = "gray")
             ax_mutant_att_adaptive_image.set_title("Att ADAPTIVE Pred= " + str(pred_att_adaptive_list[img_index]), color="green")
 
-            ax_xai_att_adaptive_image = fig.add_subplot(gs[0,4])
+            ax_xai_att_adaptive_image = fig.add_subplot(gs[0,5])
             ax_xai_att_adaptive_image.imshow(xai_image_adaptive_list[img_index][0], cmap = "jet")
             # print("SVG_points:", list_of_svg_points_list[img_index][0])
             
@@ -1732,6 +1767,9 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             #NORMAL PART
             ax_fitness.plot(iteration_list, fitness_function_normal, "r", label = "Normal Algorithm")
             ax_fitness.plot(iteration_list[img_index], fitness_function_normal[img_index], marker="o", markeredgecolor = "blue")
+            #NORMAL ADAPTIVE PART
+            ax_fitness.plot(iteration_list, fitness_function_normal_adaptive, "y", label = "Normal Adpt Algorithm")
+            ax_fitness.plot(iteration_list[img_index], fitness_function_normal_adaptive[img_index], marker="o", markeredgecolor = "blue")
             ax_fitness.set_title("Fitness ff2 vs Iteration")
             ax_fitness.set_xlabel("Iteration")
             ax_fitness.set_ylabel("Fitness ff2")
@@ -1759,6 +1797,9 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             #NORMAL PART
             ax_predictions.plot(iteration_list, prediction_function_normal, "r" ,label = "Normal Algorithm")
             ax_predictions.plot(iteration_list[img_index], prediction_function_normal[img_index], marker="o", markeredgecolor = "blue")
+            #NORMAL ADAPTIVE PART
+            ax_predictions.plot(iteration_list, prediction_function_normal_adaptive, "y" ,label = "Normal Adpt Algorithm")
+            ax_predictions.plot(iteration_list[img_index], prediction_function_normal_adaptive[img_index], marker="o", markeredgecolor = "blue")
             ax_predictions.set_title("Mutant Prediction Probablity vs Iteration")
             ax_predictions.set_xlabel("Iteration")
             ax_predictions.set_ylabel("Mutant Prediction Probablity")
@@ -1777,6 +1818,9 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             #NORMAL PART
             ax_extent.plot(iteration_list, ext_normal_list, "r" ,label = "Extent Normal Algorithm")
             ax_extent.plot(iteration_list[img_index], ext_normal_list[img_index], marker="o", markeredgecolor = "blue")
+            #NORMAL ADAPTIVE PART
+            ax_extent.plot(iteration_list, ext_normal_adaptive_list, "y" ,label = "Extent Normal Adpt Algorithm")
+            ax_extent.plot(iteration_list[img_index], ext_normal_adaptive_list[img_index], marker="o", markeredgecolor = "blue")
             ax_extent.set_title("Extents vs Iteration")
             ax_extent.set_xlabel("Iteration")
             ax_extent.set_ylabel("Extent Value")
@@ -1787,7 +1831,7 @@ def save_images_adaptive(mutant_image_normal_list, mutant_image_att_list, mutant
             
 
             plt.tight_layout()
-            plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATT=" + str(pred_att_list[img_index]) + "_predATTADP=" + str(pred_att_adaptive_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]))
+            plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATT=" + str(pred_att_list[img_index]) + "_predATTADP=" + str(pred_att_adaptive_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]) + "_predNORADP=" + str(pred_normal_adaptive_list[img_index]))
             # plt.savefig(folder_path + "/iteration=" + str(img_index) + "_predATR=" + str(pred_att_list[img_index]) + "_predNOR=" + str(pred_normal_list[img_index]) + "_ext_att=" + str(ext_att_list[img_index]) + "_ext_normal=" + str(ext_normal_list[img_index]))
             plt.cla()
             plt.close(fig)
@@ -3502,7 +3546,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                         pred_class_mutant_normal_candidate = model.predict(mutant_digit_normal_candidate)
                         fitness_mutant_normal_candidate = evaluate_ff2(pred_class_mutant_normal_candidate, LABEL)
                         if fitness_mutant_normal_candidate <= fitness_mutant_normal:
-                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                            # if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                            if False:
                                 if (fitness_mutant_normal_candidate < (0.99 * fitness_mutant_normal)):
                                     print("RESETING ext_normal_adaptive")
                                     ext_normal = EXTENT_LOWERBOUND 
@@ -3514,7 +3559,8 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                             svg_path_normal_mth = svg_path_normal_mth_candidate
                             digit_reshaped_2 = mutant_digit_normal
                         else:
-                            if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                            # if NORMAL_MUTATION_ADAPTIVE_ENABLED == True:
+                            if False:
                                 number_of_times_fitness_function_does_not_change_normal_adaptive += 1
                                 if number_of_times_fitness_function_does_not_change_normal_adaptive > 10:                                
                                     if (ext_normal + EXTENT_STEP) <= EXTENT_UPPERBOUND:
@@ -3523,9 +3569,6 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                         mutated_points_normal_list.append(point_mutated_normal)
                     else:
                         mutated_points_normal_list.append("NA")
-                    
-                    #Appending all the data to the list. Necessary to generate the plots of mutations sequentially.
-                    iteration_list.append(iteration)
 
                     # Check if a missclassification was already found for NORMAL Method. If yes, the digit will not be mutated anymore
                     if miss_classification_found_normal_adaptive == False:
@@ -3540,7 +3583,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                             pred_class_mutant_normal_adaptive = model.predict(digit_reshaped_4)
                             fitness_mutant_normal_adaptive = evaluate_ff2(pred_class_mutant_normal_adaptive, LABEL)
                             pred_input_mutant_normal_adaptive = model.predict_classes(mutant_digit_normal_adaptive)
-                        mutant_digit_normal_candidate_adaptive, point_mutated_normal_adaptive, svg_path_normal_mth_candidate_adaptive = generate_mutant(input_reshape_images_reverse(digit_reshaped_2), svg_path_normal_mth, ext_normal, square_size, number_of_points, False, ATTENTION_METHOD)
+                        mutant_digit_normal_candidate_adaptive, point_mutated_normal_adaptive, svg_path_normal_mth_candidate_adaptive = generate_mutant(input_reshape_images_reverse(digit_reshaped_4), svg_path_normal_adaptive_mth, ext_normal_adaptive, square_size, number_of_points, False, ATTENTION_METHOD)
                         pred_input_mutant_normal_candidate_adaptive = model.predict_classes(mutant_digit_normal_candidate_adaptive)
                         pred_class_mutant_normal_candidate_adaptive = model.predict(mutant_digit_normal_candidate_adaptive)
                         fitness_mutant_normal_candidate_adaptive = evaluate_ff2(pred_class_mutant_normal_candidate_adaptive, LABEL)
@@ -3609,7 +3652,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                     fitness_function_normal_adaptive_list.append(fitness_mutant_normal_adaptive)
                     prediction_function_normal_adaptive_list.append(pred_class_mutant_normal_adaptive[0][LABEL])                    
                     mutant_digit_normal_adaptive_list.append(mutant_digit_normal_adaptive)
-                    pred_input_mutant_normal_list.append(pred_input_mutant_normal_adaptive[0])
+                    pred_input_mutant_normal_adaptive_list.append(pred_input_mutant_normal_adaptive[0])
                     ext_normal_adaptive_list.append(ext_normal_adaptive)
 
                     #Checking if the prediction of the mutant digit generated by ATTENTION Method is different from the ground truth (label)
@@ -3660,7 +3703,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                         #Writing data to the stats.csv file - Data with the predicitions of both mutated digits (NORMAL and ATTENTION), Label and iteration
                             with open(csv_path, "a") as f1:
                                 writer = csv.writer(f1)
-                                writer.writerow([image_index, "NRML ADAPTIVE", METHOD, LABEL, pred_input_mutant_normal_adaptive[0], pred_class_mutant_normal_adaptive[0][LABEL], iteration])                    
+                                writer.writerow([image_index, "NORMAL ADAPTIVE", METHOD, LABEL, pred_input_mutant_normal_adaptive[0], pred_class_mutant_normal_adaptive[0][LABEL], iteration])                    
                         miss_classification_found_normal_adaptive = True
                         if method_winner == None: method_winner = "Normal Adaptive"
 
@@ -3711,7 +3754,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                     if SAVE_IMAGES == True and list_of_svg_points != None and list_of_svg_points_adaptive != None:
                         folder_path = create_folder(DST, number_of_mutations, repetition, ext_att, ext_normal, LABEL, image_index, METHOD, "ATT_vs_NOR", run_id, seed, indices_choosen[image_index]) 
                         # save_image(mutant_digit_normal, mutant_digit_att, xai, list_of_svg_points, iteration_list, fitness_function_att, prediction_function_att, fitness_function_normal, prediction_function_normal, number_of_mutations, folder_path, pred_input_mutant_normal[0], pred_input_mutant_att[0], ATTENTION_METHOD, square_size, iteration)
-                        save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att_list, fitness_function_att_adaptive_list, prediction_function_att_list, prediction_function_att_adaptive_list, fitness_function_normal_list, prediction_function_normal_list, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list)
+                        save_images_adaptive(mutant_digit_normal_list, mutant_digit_att_list, mutant_digit_att_adaptive_list, mutant_digit_normal_adaptive_list, xai_images_list, xai_images_adaptive_list, list_of_svg_points_list, list_of_svg_points_adaptive_list, iteration_list, fitness_function_att_list, fitness_function_att_adaptive_list, prediction_function_att_list, prediction_function_att_adaptive_list, fitness_function_normal_list, fitness_function_normal_adaptive_list, prediction_function_normal_list, prediction_function_normal_adaptive_list, number_of_mutations, folder_path, pred_input_mutant_normal_list, pred_input_mutant_normal_adaptive_list, pred_input_mutant_att_list, pred_input_mutant_att_adaptive_list, ATTENTION_METHOD, square_size, square_att_coordinates_list, square_att_coordinates_adaptive_list, original_svg_points_list, original_svg_points_adaptive_list, mutated_points_att_list_numeric, mutated_points_att_adaptive_list_numeric, ext_att_list, ext_att_adaptive_list, ext_normal_list, ext_normal_adaptive_list)
                         make_gif(folder_path, folder_path + "/gif")
 
                     #Writing data to the stats_2.csv file - Data reagarding a cycle of mutations. 
@@ -3720,7 +3763,7 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
                     #method_winner -> Which method took less iterations to find a missclassification
                     with open(csv_path_2, "a") as f1:
                         writer = csv.writer(f1)
-                        writer.writerow([image_index, LABEL, repetition, seed, iterations_detection_att, iterations_detection_att_adaptive, iterations_detection_normal, method_winner])
+                        writer.writerow([image_index, LABEL, repetition, seed, iterations_detection_att, iterations_detection_att_adaptive, iterations_detection_normal, iterations_detection_normal_adaptive, method_winner])
                     
                     if SAVE_STATS4_CSV == True:
                         #Writing the points mutated to the .csv 
@@ -3739,19 +3782,28 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
             #Calculating averages and std dev
             number_of_miss_classification_att = len(iterations_detection_att_list)  
             number_of_miss_classification_att_adaptive = len(iterations_detection_att_adaptive_list)               
-            number_of_miss_classification_normal = len(iterations_detection_normal_list)            
+            number_of_miss_classification_normal = len(iterations_detection_normal_list)  
+            number_of_miss_classification_normal_adaptive = len(iterations_detection_normal_adaptive_list)           
             iterations_mean_att = "NA"
             iterations_mean_att_adaptive = "NA"
             iterations_mean_normal = "NA"
+            iterations_mean_normal_adaptive = "NA"
             iterations_std_att = "NA"
             iterations_std_att_adaptive = "NA"
             iterations_std_normal = "NA"
+            iterations_std_normal_adaptive = "NA"
             #NORMAL PART
             if number_of_miss_classification_normal != 0:
                 iterations_mean_normal = np.mean(np.array(iterations_detection_normal_list))
                 iterations_std_normal = np.std(np.array(iterations_detection_normal_list))
                 iterations_mean_normal_list.append(iterations_mean_normal)
                 number_of_miss_classification_normal_list.append(number_of_miss_classification_normal)
+            #NORMAL ADAPTIVE PART
+            if number_of_miss_classification_normal_adaptive != 0:
+                iterations_mean_normal_adaptive = np.mean(np.array(iterations_detection_normal_adaptive_list))
+                iterations_std_normal_adaptive = np.std(np.array(iterations_detection_normal_adaptive_list))
+                iterations_mean_normal_adaptive_list.append(iterations_mean_normal_adaptive)
+                number_of_miss_classification_normal_adaptive_list.append(number_of_miss_classification_normal_adaptive)
             #ATT PART
             if number_of_miss_classification_att != 0:
                 iterations_mean_att = np.mean(np.array(iterations_detection_att_list))
@@ -3768,15 +3820,17 @@ def Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptiv
             #Writing data to the stats_3.csv file
             with open(csv_path_3, "a") as f1:
                 writer = csv.writer(f1)
-                writer.writerow([image_index, LABEL, iterations_mean_att, iterations_mean_att_adaptive, iterations_mean_normal, iterations_std_att, iterations_std_att_adaptive, iterations_std_normal, number_of_miss_classification_att, number_of_miss_classification_att_adaptive, number_of_miss_classification_normal])
+                writer.writerow([image_index, LABEL, iterations_mean_att, iterations_mean_att_adaptive, iterations_mean_normal, iterations_mean_normal_adaptive, iterations_std_att, iterations_std_att_adaptive, iterations_std_normal, iterations_std_normal_adaptive, number_of_miss_classification_att, number_of_miss_classification_att_adaptive, number_of_miss_classification_normal, number_of_miss_classification_normal_adaptive])
 
-            save_boxPlots_adaptive(iterations_mean_att_list, iterations_mean_att_adaptive_list, iterations_mean_normal_list,number_of_miss_classification_att_list, number_of_miss_classification_att_adaptive_list, number_of_miss_classification_normal_list, DST,"ADAPTIVE", NUMBER_OF_MUTATIONS, NUMBER_OF_REPETITIONS)
+            save_boxPlots_adaptive2(iterations_mean_att_list, iterations_mean_att_adaptive_list, iterations_mean_normal_list, iterations_mean_normal_adaptive_list, number_of_miss_classification_att_list, number_of_miss_classification_att_adaptive_list, number_of_miss_classification_normal_list, number_of_miss_classification_normal_adaptive_list, DST,"ADAPTIVE", NUMBER_OF_MUTATIONS, NUMBER_OF_REPETITIONS)
             print("iterations_mean_att_list: ", iterations_mean_att_list)
             print("iterations_mean_att_adaptive_list: ", iterations_mean_att_adaptive_list)
             print("iterations_mean_normal_list: ", iterations_mean_normal_list)
+            print("iterations_mean_normal_adaptive_list: ", iterations_mean_normal_adaptive_list)
             print("number_of_miss_classification_att_list: ", number_of_miss_classification_att_list)
             print("number_of_miss_classification_att_adaptive_list: ", number_of_miss_classification_att_adaptive_list)
             print("number_of_miss_classification_normal_list: ", number_of_miss_classification_normal_list)
+            print("number_of_miss_classification_normal_adaptive_list: ", number_of_miss_classification_normal_adaptive_list)
                 
     end_time = time.time()
     print("Total Durantion time: ", str(end_time-start_time))
@@ -3800,6 +3854,8 @@ if __name__ == "__main__":
         how_to_use_Vincenzo_fuctions()
     elif RUNNING_OPTION == "ATT_vs_ATT+ADP_vs_NOR":
         Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive()
+    elif RUNNING_OPTION == "ATT_vs_ATT+ADP_vs_NOR_vs_NOR+ADP":
+        Comparison_Script_Attention_vs_Normal_Mutation_vs_adaptive_vs_normal_adaptive()
 
 
 
