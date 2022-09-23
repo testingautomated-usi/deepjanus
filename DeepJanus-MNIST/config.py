@@ -85,7 +85,7 @@ FITNESS_THRESHOLD_TO_GENERATE_MORE_MUTATIONS = 0.8 #The script will add more mut
 EXTRA_MUTATIONS = 1 #Number of mutations to be added
 
 #Init Data Set CONFIG
-RANDOM_SEED = 1
+RANDOM_SEED = 2
 SHUFFLE_IMAGES = False
 NUMBER_OF_DIGIT_SAMPLES = 5 #Number of samples of a same digit that will be mutated in the experiment
 N = 10 * NUMBER_OF_DIGIT_SAMPLES #Nummber of total Images to take from MNIST dataset
@@ -102,3 +102,8 @@ RUNNING_OPTION = "ATT_vs_ATT+ADP_vs_NOR_vs_NOR+ADP"
 RUN_MNIST_SPECIFIC_INDEXES = None #Specify the MNIST images (by the indexes) to reproduce results. If None, the list of images to be tested will be initialized randomly based on START_SEED.
 
 SAVE_STATS4_CSV = False #Option to print the location of the points mutated at each iteration
+
+#Histogram and Chart Generators Configs
+HISTOGRAM1_PATH = "mutants/Histogram.png" #Plotting Plotting histogram comparison: four methods same image
+HISTOGRAM2_PATH = "mutants/Histogram_1.png" #Plotting histogram comparison: Adaptive vs Without Adaptive (Top and Bottom)
+HISTOGRAM3_PATH = "mutants/Histogram_2.png" #Plotting histogram comparison: Att vs Normal (Top and Bottom)
