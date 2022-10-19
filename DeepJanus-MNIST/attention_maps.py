@@ -482,8 +482,13 @@ def get_attetion_region_mth5(xai_image, svg_path_list, number_of_points):
 
 
 def compute_attention_maps(images):# images should have the shape: (x, 28, 28) where x>=1
+
+
     # start_time = time.time()
     images_reshaped = input_reshape_and_normalize_images(images)
+
+    print(images_reshaped)
+    exit()
 
     X = preprocess_input(images_reshaped, mode = "tf")
 

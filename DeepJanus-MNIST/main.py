@@ -7,6 +7,7 @@ import h5py
 import vectorization_tools
 from mnist_member import MnistMember
 from digit_mutator import DigitMutator
+from attention_manager import AttentionManager
 
 from predictor import Predictor
 from timer import Timer
@@ -16,7 +17,7 @@ from individual import Individual
 from config import NGEN, \
     POPSIZE, INITIALPOP, \
     RESEEDUPPERBOUND, GENERATE_ONE_ONLY, DATASET, \
-    STOP_CONDITION, STEPSIZE, DJ_DEBUG
+    STOP_CONDITION, STEPSIZE, DJ_DEBUG, MUTATION_TYPE
 
 # Load the dataset.
 hf = h5py.File(DATASET, 'r')
@@ -124,17 +125,23 @@ def pre_evaluate_batch(invalid_ind):
 
     batch_label = ([m.expected_label for m in batch_members])
 
+    if MUTATION_TYPE == "attention-based":
+        attmaps = AttentionManager.compute_attention_maps(batch_img)
+    else:
+        attmaps = [None] * len(batch_img)
+
     predictions, confidences = (Predictor.predict(img=batch_img,
                                                   label=batch_label))
 
-    for member, prediction, confidence \
-            in zip(batch_members, predictions, confidences):
+    for member, prediction, confidence, attmap \
+            in zip(batch_members, predictions, confidences, attmaps):
         member.confidence = confidence
         member.predicted_label = prediction
         if member.expected_label == member.predicted_label:
             member.correctly_classified = True
         else:
             member.correctly_classified = False
+        member.attention = attmap
 
 
 def main(rand_seed=None):

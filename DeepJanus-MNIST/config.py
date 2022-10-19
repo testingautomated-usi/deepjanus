@@ -6,10 +6,12 @@ POPSIZE = 100
 STOP_CONDITION = "iter"
 #STOP_CONDITION = "time"
 
-NGEN = 15
+NGEN = 30
 RUNTIME = 3600
 STEPSIZE = 10
 # Mutation Hyperparameters
+#MUTATION_TYPE = "random"
+MUTATION_TYPE = "attention-based"
 # range of the mutation
 MUTLOWERBOUND = 0.01
 MUTUPPERBOUND = 0.6

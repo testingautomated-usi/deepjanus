@@ -1,75 +1,20 @@
 import random
 import xml.etree.ElementTree as ET
 import re
+import numpy as np
 from random import randint, uniform
-from config import MUTLOWERBOUND, MUTUPPERBOUND, MUTOFPROB
+from config import MUTLOWERBOUND, MUTUPPERBOUND, \
+    MUTOFPROB, NUMBER_OF_POINTS, SQUARE_SIZE
 
 from attention_maps import AM_get_attetion_svg_points_images_mth1, \
     AM_get_attetion_svg_points_images_mth2, \
     AM_get_attetion_svg_points_images_mth5
 
 from predictor import Predictor
+from attention_manager import AttentionManager
 
 NAMESPACE = '{http://www.w3.org/2000/svg}'
 
-def apply_displacement_to_mutant_2(list_of_points, extent):
-    displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
-    x_or_y = random.choice((0,1))
-    y_or_x = (x_or_y-1) * -1
-    list_of_mutated_coordinates_string = []
-    coordinate_matutated = [0,0]
-    for point in list_of_points:
-        coordinate_matutated[y_or_x] = point[y_or_x]
-        value = point[x_or_y]        
-        if random.uniform(0, 1) >= MUTOFPROB:
-            result = float(value) + displ
-            coordinate_matutated[x_or_y] = result
-            list_of_mutated_coordinates_string.append(str(coordinate_matutated[0])+","+str(coordinate_matutated[1]))
-        else:
-            result = float(value) - displ
-            coordinate_matutated[x_or_y] = result
-            list_of_mutated_coordinates_string.append(str(coordinate_matutated[0])+","+str(coordinate_matutated[1]))
-    return list_of_mutated_coordinates_string
-
-def apply_mutoperator_attention_2(input_img, svg_path, extent):
-    # start_time = time.time()
-    attention_mth = 5
-    
-    if attention_mth != 2:
-        if attention_mth == 1:
-            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3, svg_path)            
-        elif attention_mth == 5:
-            list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth5(input_img, 2, svg_path)
-        else:
-            print("Choose a valid attention_mth option in mutation_manager.py")
-            
-        list_of_mutated_coordinates_string = apply_displacement_to_mutant_2(list_of_points_inside_square_attention_patch[0], extent)
-            
-        # print("LIMCS", list_of_mutated_coordinates_string)  
-        
-        originalPath = svg_path
-        list_of_points = list_of_points_inside_square_attention_patch[0]                                                                                                
-        for original_coordinate_tuple, mutated_coordinate_tuple in zip(list_of_points, list_of_mutated_coordinates_string):
-            original_coordinate = str(original_coordinate_tuple[0]) + "," + str(original_coordinate_tuple[1])
-            # print("original coordinate", original_coordinate)
-            # print("mutated coordinate", mutated_coordinate_tuple)
-            mutatedPath = originalPath.replace(original_coordinate, mutated_coordinate_tuple)
-
-    elif attention_mth == 2:
-        original_point, elapsed_time = AM_get_attetion_svg_points_images_mth2(input_img, 3, svg_path)
-        original_coordinate = random.choice(original_point)
-        # print(original_point)
-        # print(original_coordinate)
-
-        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
-
-        mutatedPath = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
-    else:
-        print("Choose a valid attention_mth option in mutation_manager.py")
-
-    # end_time = time.time()
-    # print("apply_mutoperator_attention_2 mth5 time: ", (end_time - start_time))
-    return mutatedPath
 
 def apply_displacement_to_mutant(value, extent):
     displ = uniform(MUTLOWERBOUND, MUTUPPERBOUND) * extent
@@ -78,21 +23,6 @@ def apply_displacement_to_mutant(value, extent):
     else:
         result = float(value) - displ
     return repr(result)
-
-
-def apply_mutoperator_attention(input_img, svg_path, extent):
-    list_of_points_inside_square_attention_patch, elapsed_time = AM_get_attetion_svg_points_images_mth1(input_img, 3, 3,
-                                                                                                        Predictor.model)
-    original_point = random.choice(list_of_points_inside_square_attention_patch[0])
-    original_coordinate = random.choice(original_point)
-
-    mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
-
-
-    path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
-
-    # TODO: it seems that the points inside the square attention patch do not precisely match the point coordinates in the svg, to be tested
-    return path
 
 
 def apply_mutoperator1(input_img, svg_path, extent):
@@ -142,21 +72,103 @@ def apply_mutoperator2(input_img, svg_path, extent):
     return path
 
 
+def get_attetion_region_prob(xai_image, svg_path_list, sqr_size):
+    x_dim = xai_image.shape[0]
+    y_dim = xai_image.shape[1]
+
+    if sqr_size == 3:
+        y_border_up = -1
+        y_border_bottom = 1
+        x_border_right = 1
+        x_border_left = -1
+    elif sqr_size == 5:
+        y_border_up = -2
+        y_border_bottom = 2
+        x_border_right = 2
+        x_border_left = -2
+    else:
+        print("Choose a valid value for square_size (sqr_size): 3 or 5")
+        return 0
+
+    xai_list = []
+    for pos in svg_path_list:
+        x_sqr_pos = int(pos[0])
+        y_sqr_pos = int(pos[1])
+        sum_xai = 0
+        for y_in_sqr in range(y_border_up, y_border_bottom + 1):
+            y_pixel_pos = y_sqr_pos + y_in_sqr
+            if 0 <= y_pixel_pos <= y_dim - 1:
+                for x_in_sqr in range(x_border_left, x_border_right + 1):
+                    x_pixel_pos = x_sqr_pos + x_in_sqr
+                    if 0 <= x_pixel_pos <= x_dim - 1:
+                        sum_xai += xai_image[y_pixel_pos][x_pixel_pos]
+        xai_list.append(sum_xai)
+
+    sum_xai_list = sum(xai_list)
+    list_of_weights = []
+    list_of_probabilities = []
+
+    for sum_value, pos in zip(xai_list, svg_path_list):
+        list_of_weights.append(np.exp((sum_value / sum_xai_list) * 100))
+
+    sum_weights_list = sum(list_of_weights)
+    for weight in list_of_weights:
+        list_of_probabilities.append(weight / sum_weights_list)
+
+    return list_of_weights, list_of_probabilities
+
+
+def AM_get_attetion_svg_points_images_prob(images, svg_path):
+    """
+    AM_get_attetion_svg_points_images_mth2 Calculate the attetion score around each SVG path point and return a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points
+
+    :param images: images should have the shape: (x, 28, 28) where x>=1
+    :param sqr_size: X and Y size of the square region
+    :param model: The model object that will predict the value of the digit in the image
+    :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
+    """
+    import copy
+    copy_images = copy.deepcopy(images)
+    xai = AttentionManager.compute_attention_maps(copy_images)
+
+    pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
+    ControlPoints = pattern.findall(svg_path)
+    controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
+    if len(ControlPoints) != 0:
+        weight_list, prob_list = get_attetion_region_prob(xai[0], controlPoints, SQUARE_SIZE)
+    else:
+        return None, "NA", xai, controlPoints
+
+    return weight_list, controlPoints
+
+
+def apply_mutoperator_roulette_attention(input_img, svg_path, extent):
+    list_of_weights, original_svg_points = AM_get_attetion_svg_points_images_prob(input_img, svg_path)
+    # TODO: check if the image is valid
+    if list_of_weights is not None:
+        original_point = random.choices(population=original_svg_points, weights=list_of_weights, k=1)[0]
+        original_coordinate = random.choice(original_point)
+        mutated_coordinate = apply_displacement_to_mutant(original_coordinate, extent)
+        path = svg_path.replace(str(original_coordinate), str(mutated_coordinate))
+        return path
+    else:
+        # TODO: this else branch would start an infinite loop
+        return svg_path
+
+
 def mutate(input_img, svg_desc, operator_name, mutation_extent):
     root = ET.fromstring(svg_desc)
     svg_path = root.find(NAMESPACE + 'path').get('d')
     mutant_vector = svg_path
-
-    operator_name = 3
 
     if operator_name == 1:
         mutant_vector = apply_mutoperator1(input_img, svg_path, mutation_extent)
     elif operator_name == 2:
         mutant_vector = apply_mutoperator2(input_img, svg_path, mutation_extent)
     elif operator_name == 3:
-        mutant_img = input_img.reshape(1, 28, 28)
-        mutant_img = mutant_img * 255
-        mutant_vector = apply_mutoperator_attention_2(mutant_img, svg_path, mutation_extent)
+        #mutant_img = input_img.reshape(1, 28, 28)
+        #mutant_vector = apply_mutoperator_attention_2(mutant_img, svg_path, mutation_extent)
+        mutant_vector = apply_mutoperator_roulette_attention(input_img, svg_path, mutation_extent)
     return mutant_vector
 
 

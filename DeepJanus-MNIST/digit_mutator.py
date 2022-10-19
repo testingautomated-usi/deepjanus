@@ -3,7 +3,7 @@ import mutation_manager
 import rasterization_tools
 import vectorization_tools
 from mnist_member import MnistMember
-from config import MUTOPPROB
+from config import MUTOPPROB, MUTATION_TYPE
 from utils import get_distance
 
 
@@ -14,12 +14,16 @@ class DigitMutator:
         self.seed = digit.seed
 
     def mutate(self, reference=None):
+        # TODO: be more specific on mutation types (do not use numbers)
         # Select mutation operator.
-        rand_mutation_probability = random.uniform(0, 1)
-        if rand_mutation_probability >= MUTOPPROB:
-            mutation = 1
-        else:
-            mutation = 2
+        if MUTATION_TYPE == "random":
+            rand_mutation_probability = random.uniform(0, 1)
+            if rand_mutation_probability >= MUTOPPROB:
+                mutation = 1
+            else:
+                mutation = 2
+        elif MUTATION_TYPE == "attention-based":
+            mutation = 3
 
         condition = True
         counter_mutations = 0

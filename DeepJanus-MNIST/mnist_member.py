@@ -12,7 +12,6 @@ from utils import get_distance
 import matplotlib.pyplot as plt
 
 
-
 class MnistMember:
     COUNT = 0
 
@@ -26,6 +25,7 @@ class MnistMember:
         self.predicted_label = None
         self.confidence = None
         self.correctly_classified = None
+        self.attention = None
         MnistMember.COUNT += 1
 
     def clone(self):
