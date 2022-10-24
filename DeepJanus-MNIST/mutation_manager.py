@@ -118,7 +118,7 @@ def get_attetion_region_prob(xai_image, svg_path_list, sqr_size):
     return list_of_weights, list_of_probabilities
 
 
-def AM_get_attetion_svg_points_images_prob(images, svg_path):
+def AM_get_attetion_svg_points_images_prob(images, svg_path, xai):
     """
     AM_get_attetion_svg_points_images_mth2 Calculate the attetion score around each SVG path point and return a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points
 
@@ -128,22 +128,27 @@ def AM_get_attetion_svg_points_images_prob(images, svg_path):
     :return: A a list of points (tuples) and the respective non-uniform distribution weights for all the SVG path points. A well detailed explanation about the structure of the list returned is described at the end of this function.
     """
     import copy
-    copy_images = copy.deepcopy(images)
-    xai = AttentionManager.compute_attention_maps(copy_images)
+    #copy_images = copy.deepcopy(images)
+    #xai = AttentionManager.compute_attention_maps(copy_images)
+
+    #print(xai[0].shape)
+    #print(attmap.shape)
+    #exit()
 
     pattern = re.compile('([\d\.]+),([\d\.]+)\s[MCLZ]')
     ControlPoints = pattern.findall(svg_path)
     controlPoints = [(float(i[0]), float(i[1])) for i in ControlPoints]
     if len(ControlPoints) != 0:
-        weight_list, prob_list = get_attetion_region_prob(xai[0], controlPoints, SQUARE_SIZE)
+        #weight_list, prob_list = get_attetion_region_prob(xai[0], controlPoints, SQUARE_SIZE)
+        weight_list, prob_list = get_attetion_region_prob(xai, controlPoints, SQUARE_SIZE)
     else:
         return None, "NA", xai, controlPoints
 
     return weight_list, controlPoints
 
 
-def apply_mutoperator_roulette_attention(input_img, svg_path, extent):
-    list_of_weights, original_svg_points = AM_get_attetion_svg_points_images_prob(input_img, svg_path)
+def apply_mutoperator_roulette_attention(input_img, svg_path, extent, attmap):
+    list_of_weights, original_svg_points = AM_get_attetion_svg_points_images_prob(input_img, svg_path, attmap)
     # TODO: check if the image is valid
     if list_of_weights is not None:
         original_point = random.choices(population=original_svg_points, weights=list_of_weights, k=1)[0]
@@ -156,7 +161,7 @@ def apply_mutoperator_roulette_attention(input_img, svg_path, extent):
         return svg_path
 
 
-def mutate(input_img, svg_desc, operator_name, mutation_extent):
+def mutate(input_img, svg_desc, attmap, operator_name, mutation_extent):
     root = ET.fromstring(svg_desc)
     svg_path = root.find(NAMESPACE + 'path').get('d')
     mutant_vector = svg_path
@@ -168,7 +173,8 @@ def mutate(input_img, svg_desc, operator_name, mutation_extent):
     elif operator_name == 3:
         #mutant_img = input_img.reshape(1, 28, 28)
         #mutant_vector = apply_mutoperator_attention_2(mutant_img, svg_path, mutation_extent)
-        mutant_vector = apply_mutoperator_roulette_attention(input_img, svg_path, mutation_extent)
+        #mutant_vector = apply_mutoperator_roulette_attention(input_img, svg_path, mutation_extent)
+        mutant_vector = apply_mutoperator_roulette_attention(input_img, svg_path, mutation_extent, attmap)
     return mutant_vector
 
 

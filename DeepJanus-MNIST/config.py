@@ -6,7 +6,7 @@ POPSIZE = 100
 STOP_CONDITION = "iter"
 #STOP_CONDITION = "time"
 
-NGEN = 30
+NGEN = 300
 RUNTIME = 3600
 STEPSIZE = 10
 # Mutation Hyperparameters

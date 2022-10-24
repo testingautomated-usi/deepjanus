@@ -28,10 +28,13 @@ class DigitMutator:
         condition = True
         counter_mutations = 0
         distance_inputs = 0
+
+
+
         while condition:
             counter_mutations += 1
             #mutant_vector = mutation_manager.mutate(self.digit.xml_desc, mutation, counter_mutations/20)
-            mutant_vector = mutation_manager.mutate(self.digit.purified, self.digit.xml_desc, mutation, counter_mutations / 20)
+            mutant_vector = mutation_manager.mutate(self.digit.purified, self.digit.xml_desc, self.digit.attention, mutation, counter_mutations / 20)
             mutant_xml_desc = vectorization_tools.create_svg_xml(mutant_vector)
             rasterized_digit = rasterization_tools.rasterize_in_memory(mutant_xml_desc)
 
@@ -45,11 +48,13 @@ class DigitMutator:
                 else:
                     condition = False
 
+
         self.digit.xml_desc = mutant_xml_desc
         self.digit.purified = rasterized_digit
         self.digit.predicted_label = None
         self.digit.confidence = None
         self.digit.correctly_classified = None
+        self.digit.attention = None
 
         return distance_inputs
 
