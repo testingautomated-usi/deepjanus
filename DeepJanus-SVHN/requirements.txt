@@ -1,0 +1,13 @@
+cairocffi==0.9.0
+CairoSVG==2.2.1
+cffi==1.14.0
+deap==1.2.2
+grpcio==1.31.0
+h5py==2.10.0
+Keras-Preprocessing==1.1.2
+matplotlib==3.2.1
+pycparser==2.20
+Pygments==2.3.1
+scikit-learn==0.24.1
+scipy==1.5.2
+tensorflow==2.3.0
